@@ -1,0 +1,1 @@
+VirtuTrade - A platform to practice trading with paper money
