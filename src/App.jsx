@@ -1,15 +1,29 @@
 import { useState } from 'react'
+import { Route, Routes } from "react-router-dom";
+import Landing from "./pages/LandingPage";
+import Login from "./pages/LoginPage";
+import Signup from "./pages/SignupPage";
+import HomePage from "./pages/HomePage";
+import ForgotPassword from './pages/ForgotPassword';
+import UpdatePassword from './pages/UpdatePassword';
+import ErrorPage from './pages/ErrorPage';
 // import './App.css'
 
 function App() {
   return (
     <>
-      <div>
-        <p className='text-2xl font-bold text-center'>Hello VirtuTrade</p>
-      </div>
-        
+      <Routes>
+        <Route path="/" element={<Landing />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/signup" element={<Signup />} />
+        <Route path="/home" element={<HomePage />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/update-password/:id" element={<UpdatePassword />} />
+
+        <Route path="*" element={<ErrorPage />} />
+      </Routes>
     </>
-  )
+  );
 }
 
 export default App
