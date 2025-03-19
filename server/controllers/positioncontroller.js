@@ -3,8 +3,10 @@ const User = require("../models/user");
 const { Position, BuyPosition, SellPosition } = require("../models/Position");
 
 const buy = async (req, res) => {
-  const { userId, stockSymbol, buyPrice, quantity, currentStockPrice } =
+  const { stockSymbol, buyPrice, quantity, currentStockPrice } =
     req.body;
+
+  const userId = req.user.userId;
 
   try {
     let status = "pending";
@@ -32,7 +34,9 @@ const buy = async (req, res) => {
 };
 
 const sell = async (req, res) => {
-  const { userId, stockSymbol, sellPrice, marketPrice, quantity } = req.body;
+  const { stockSymbol, sellPrice, marketPrice, quantity } = req.body;
+
+  const userId = req.user.userId;
 
   try {
     const position = await BuyPosition.findOne({
@@ -128,7 +132,7 @@ const sell = async (req, res) => {
 };
 
 const getPositions = async (req, res) => {
-  const id = req.params.id;
+  const id = req.user.userId;
   try {
     const positions = await Position.find({ userId: id });
     if (!positions) {
@@ -142,7 +146,7 @@ const getPositions = async (req, res) => {
 };
 
 const getExecutedPositions = async (req, res) => {
-  const id = req.params.id;
+  const id = req.user.userId;
   try {
     const positions = await Position.find({
       userId: id,
@@ -163,7 +167,7 @@ const getExecutedPositions = async (req, res) => {
 };
 
 const getHistory = async (req, res) => {
-  const id = req.params.id;
+  const id = req.user.userId;
   try {
     const history = await History.find({ userId: id });
     if (!history) {

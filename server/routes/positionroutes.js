@@ -9,15 +9,17 @@ const {
   getExecutedPositions,
 } = require("../controllers/positioncontroller");
 
+const { auth } = require("../middlewares/auth");
+
 const router = express.Router();
 
 // Base router '/api/position'
-router.post("/buy", buy);
-router.post("/sell", sell);
-router.get("/get/:id", getPositions);
-router.get("/getexecuted/:id", getExecutedPositions);
-router.get("/history/get/:id", getHistory);
-router.delete("/remove/:id", removeStockFromPositions);
-router.patch("/modify/:id", modifyPriceAndQty);
+router.post("/buy", auth, buy);
+router.post("/sell", auth, sell);
+router.get("/get", auth, getPositions);
+router.get("/getexecuted", auth, getExecutedPositions);
+router.get("/history/get", auth, getHistory);
+router.delete("/remove/:id", auth, removeStockFromPositions);
+router.patch("/modify/:id", auth, modifyPriceAndQty);
 
 module.exports = router;

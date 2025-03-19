@@ -27,7 +27,7 @@ const addToWatchlist = async (req, res) => {
 // Get User Watchlist
 const getWatchlist = async (req, res) => {
   try {
-    const watchlist = await Watchlist.findOne({ userId: req.params.userId });
+    const watchlist = await Watchlist.findOne({ userId: req.user.userId });
 
     if (!watchlist) {
       return res
