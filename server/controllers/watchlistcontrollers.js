@@ -2,7 +2,8 @@ const Watchlist = require("../models/Watchlist");
 
 //Add Stock to Watchlist
 const addToWatchlist = async (req, res) => {
-  const { userId, stockSymbol } = req.body;
+  const {stockSymbol } = req.body;
+  const userId = req.user.userId;
 
   try {
     let watchlist = await Watchlist.findOne({ userId });
@@ -43,7 +44,8 @@ const getWatchlist = async (req, res) => {
 
 //Remove Stock from Watchlist
 const removeFromWatchlist = async (req, res) => {
-  const { userId, stockSymbol } = req.body;
+  const { stockSymbol } = req.body;
+  const userId = req.user.userId;
 
   try {
     const watchlist = await Watchlist.findOne({ userId });

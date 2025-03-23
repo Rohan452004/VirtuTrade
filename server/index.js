@@ -6,6 +6,7 @@ const cors = require("cors");
 const http = require("http");
 const socketIo = require("socket.io");
 const axios = require("axios");
+const cookieparser = require("cookie-parser")
 
 const { BuyPosition, SellPosition } = require("./models/Position");
 const History = require("./models/History");
@@ -21,11 +22,15 @@ const frontendurl = process.env.FRONTEND_URL;
 db.connectDB();
 app.use(
   cors({
-    origin: [frontendurl],
-    credentials: true,
+    origin: process.env.FRONTEND_URL || "http://localhost:5173",
+    credentials: true, 
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
+    allowedHeaders: ["Content-Type", "Authorization"], 
   })
 );
 
+
+app.use(cookieparser());
 app.use(express.json());
 app.use("/api", userRoutes);
 app.use("/api/watchlist", watchlistRoutes);
@@ -71,7 +76,7 @@ io.on('connection', (socket) => {
                 const buyOrders = await BuyPosition.find({ stockSymbol, status: 'pending' }); //type 'buy'
 
                 for (let order of buyOrders) {
-                    if (order.buyPrice === currentStockPrice) {
+                    if (order.buyPrice >= currentStockPrice) {
                         order.status = 'executed';
                         await order.save();
                         io.emit('orderUpdated', { userId: order.userId, stockSymbol, status: 'Buy order executed' });

@@ -95,9 +95,19 @@ const loginUser = async (req, res) => {
       const token = jwt.sign({ userId: user._id, email: user.email }, process.env.JWT_SECRET, {
         expiresIn: "24h",
       });
-      res
-        .status(200)
-        .json({ success: true, message: "Login in success", token, user });
+
+      user.token = token;
+      user.save();
+      const options = {
+        expires: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
+        httpOnly: true,
+      };
+      res.cookie("token", token, options).status(200).json({
+        success: true,
+        token,
+        user,
+        message: `User Login Success`,
+      });
     } catch (error) {
       console.error("Error in login", error.message);
       res

@@ -31,7 +31,8 @@ function LoginPage() {
     try {
       const res = await axios.post(
         `${import.meta.env.VITE_APP_WEB_URL}/api/users/login`,
-        { email, password }
+        { email, password },
+        { withCredentials: true }
       );
 
       if (res.data.success) {
