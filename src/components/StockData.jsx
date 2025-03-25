@@ -19,12 +19,10 @@ const StockData = ({
 
   // Update symbol whenever newSymbol changes
   useEffect(() => {
-    if (newSymbol) {
+    if (newSymbol && newSymbol !== symbol) {
       setNewSymbol(newSymbol);
-    } else {
-      setNewSymbol(defaultSymbol);
     }
-  }, [newSymbol, defaultSymbol]);
+  }, [newSymbol]);
 
   async function calculateRequiredAmount(e) {
     const qty = Number(e.target.value);
@@ -168,38 +166,47 @@ const StockData = ({
         );
         const chartData = response.data.chart.result[0];
 
-        setSymbolData(chartData.meta);
-
         if (
           !chartData ||
           !chartData.timestamp ||
-          !chartData.indicators.quote[0]
+          !chartData.indicators?.quote[0]
         ) {
           console.error("Invalid stock data received.");
           return;
         }
 
+        setSymbolData((prevData) => {
+          if (JSON.stringify(prevData) === JSON.stringify(chartData.meta)) {
+            return prevData; // Prevent unnecessary updates
+          }
+          return chartData.meta;
+        });
+
         const formattedData = chartData.timestamp.map((time, index) => ({
-          time: time,
+          time,
           open: chartData.indicators.quote[0].open[index],
           high: chartData.indicators.quote[0].high[index],
           low: chartData.indicators.quote[0].low[index],
           close: chartData.indicators.quote[0].close[index],
         }));
-        setChartData(formattedData);
+
+        setChartData((prevData) => {
+          if (JSON.stringify(prevData) === JSON.stringify(formattedData)) {
+            return prevData; // Prevent unnecessary updates
+          }
+          return formattedData;
+        });
       } catch (error) {
         console.error("Error fetching stock data:", error);
       }
     };
 
-    // Fetch data every 1 second
-    const intervalId = setInterval(() => {
-      fetchStockData();
-    }, 1000); // 1000ms = 1s
+    fetchStockData(); // Fetch immediately
 
-    // Cleanup interval when component unmounts or symbol changes
-    return () => clearInterval(intervalId);
-  }, [symbol]); // Depend on symbol instead of newSymbol and defaultSymbol
+    const intervalId = setInterval(fetchStockData, 5000); // Fetch every 5 seconds
+
+    return () => clearInterval(intervalId); // Cleanup on unmount
+  }, [symbol]); // Depend on symbol
 
   useEffect(() => {
     if (!data) return; // Ensure data exists before calculating
@@ -217,7 +224,7 @@ const StockData = ({
   }, [data]);
 
   return (
-    <div className="bg-gray-800 rounded-lg shadow-lg p-6 border border-gray-700 w-full h-[82vh] overflow-y-auto">
+    <div className="bg-gray-800 rounded-lg shadow-lg p-6 border border-gray-700 w-full h-[96vh] overflow-y-auto">
       {/* Market Details */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex gap-2">

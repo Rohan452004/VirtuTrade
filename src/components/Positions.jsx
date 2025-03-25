@@ -1,167 +1,251 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 
+const SellOrderModal = ({
+  isOpen,
+  onClose,
+  onSubmit,
+  currentPrice,
+  stockSymbol,
+  maxQuantity,
+}) => {
+  const [price, setPrice] = useState("");
+  const [quantity, setQuantity] = useState("");
+  const [isMarketOrder, setIsMarketOrder] = useState(true);
+
+  useEffect(() => {
+    if (isMarketOrder && currentPrice) {
+      setPrice(currentPrice.toFixed(2));
+    }
+    setQuantity(maxQuantity.toString());
+  }, [isMarketOrder, currentPrice, maxQuantity]);
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    const sellPrice = isMarketOrder ? currentPrice : parseFloat(price);
+    const sellQuantity = parseInt(quantity);
+
+    if (sellQuantity > maxQuantity) {
+      alert("Quantity exceeds available shares");
+      return;
+    }
+
+    onSubmit({
+      price: sellPrice,
+      marketPrice: currentPrice,
+      quantity: sellQuantity,
+      isMarketOrder,
+    });
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+      <div className="bg-gray-800 rounded-lg p-6 w-full max-w-md">
+        <h3 className="text-lg font-semibold text-white mb-4">
+          Sell {stockSymbol.toUpperCase()}
+        </h3>
+
+        <form onSubmit={handleSubmit}>
+          <div className="mb-4">
+            <label className="block text-sm text-gray-300 mb-2">
+              Quantity (Max: {maxQuantity})
+            </label>
+            <input
+              type="number"
+              value={quantity}
+              onChange={(e) => setQuantity(e.target.value)}
+              className="w-full p-2 bg-gray-700 text-white rounded focus:ring-2 focus:ring-green-500"
+              min="1"
+              max={maxQuantity}
+              required
+            />
+          </div>
+
+          <div className="flex items-center gap-2 mb-4">
+            <input
+              type="checkbox"
+              id="marketOrder"
+              checked={isMarketOrder}
+              onChange={(e) => setIsMarketOrder(e.target.checked)}
+              className="form-checkbox h-4 w-4 text-green-500"
+            />
+            <label htmlFor="marketOrder" className="text-white">
+              Market Order
+            </label>
+          </div>
+
+          {!isMarketOrder && (
+            <div className="mb-4">
+              <label className="block text-sm text-gray-300 mb-2">
+                Limit Price
+              </label>
+              <input
+                type="number"
+                step="0.01"
+                value={price}
+                onChange={(e) => setPrice(e.target.value)}
+                className="w-full p-2 bg-gray-700 text-white rounded focus:ring-2 focus:ring-green-500"
+                required
+                min="0.01"
+              />
+            </div>
+          )}
+
+          {isMarketOrder && (
+            <div className="mb-4 text-sm text-gray-300">
+              Estimated Price: ₹{currentPrice?.toFixed(2)}
+            </div>
+          )}
+
+          <div className="flex justify-end gap-3">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-2 text-gray-300 hover:text-white"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+            >
+              Confirm Sell
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
+
 const Positions = ({
   title,
   selectedStock,
   getExecutedPositions,
   positions,
 }) => {
-  const [data, setSymbolData] = useState([]);
+  const [isSellModalOpen, setSellModalOpen] = useState(false);
+  const [selectedPosition, setSelectedPosition] = useState(null);
+  const [currentMarketPrice, setCurrentMarketPrice] = useState(0);
   const user = JSON.parse(sessionStorage.getItem("user"));
 
-  const fetchStockCurrentPrice = async (symbol) => {
+  const fetchStockPrice = async (symbol) => {
     try {
       const response = await axios.get(
         `${import.meta.env.VITE_APP_WEB_URL}/api/stock/${symbol}`
       );
-      const chartData = response.data.chart.result[0];
-      setSymbolData(chartData.meta);
-
-      if (
-        !chartData ||
-        !chartData.timestamp ||
-        !chartData.indicators.quote[0]
-      ) {
-        console.error("Invalid stock data received.");
-        return;
-      }
+      return response.data.chart.result[0].meta.regularMarketPrice;
     } catch (error) {
-      console.error("Error fetching stock data:", error);
+      console.error("Error fetching stock price:", error);
+      return null;
     }
   };
 
-  const handleSell = async (symbol, quantity) => {
+  const handleSellSubmit = async ({ price, quantity, marketPrice, isMarketOrder }) => {
     try {
+
+          if (!marketPrice) {
+            alert("Could not fetch current market price");
+            return;
+          }
       const response = await axios.post(
         `${import.meta.env.VITE_APP_WEB_URL}/api/position/sell`,
         {
-          stockSymbol: symbol,
-          sellPrice: Number(data.regularMarketPrice),
-          marketPrice: Number(data.regularMarketPrice),
-          quantity,
+          stockSymbol: selectedPosition.stockSymbol,
+          sellPrice: Number(price),
+          marketPrice: Number(marketPrice),
+          quantity: Number(quantity),
         },
-        {
-            withCredentials: true,
-        }
+        { withCredentials: true }
       );
 
-      user.balance = response.data.user.balance;
+    //   user.balance = response.data.user.balance;
       sessionStorage.setItem("user", JSON.stringify(user));
+      getExecutedPositions();
+      setSellModalOpen(false);
       alert(response.data.message);
     } catch (error) {
-      console.error("Error:", error);
+      console.error("Sell error:", error);
+      alert(error.response?.data?.message || "Failed to place sell order");
     }
   };
 
-  const sellOrder = async (symbol, quantity) => {
-    let c = 1;
-
-    do {
-      await fetchStockCurrentPrice(symbol);
-      await new Promise((resolve) => setTimeout(resolve, 500));
-
-      if (data.length !== 0) break;
-
-      if (c === 10) {
-        alert("Warning: Problem in Selling. Try again");
+  const handleSellClick = async (position) => {
+    try {
+      const price = await fetchStockPrice(position.stockSymbol);
+      if (!price) {
+        alert("Failed to fetch current market price");
         return;
       }
 
-      c++;
-    } while (true);
-
-    await handleSell(symbol, quantity);
-    getExecutedPositions();
+      setCurrentMarketPrice(price);
+      setSelectedPosition(position);
+      setSellModalOpen(true);
+    } catch (error) {
+      console.error("Error preparing sell order:", error);
+    }
   };
 
-  useEffect(() => {
-    getExecutedPositions();
-  }, []);
-
   return (
-    <div className="border border-gray-600 rounded-lg bg-gray-800 shadow-lg w-full lg:w-96 h-[89.7vh] overflow-hidden">
-      {/* Positions Title */}
-      <h2 className="text-lg font-semibold text-white p-4 border-b border-gray-700">
-        {title}
-      </h2>
+    <div className="border border-gray-600 rounded-lg bg-gray-800 shadow-lg w-full lg:w-96 h-[96vh] overflow-hidden">
+      {/* Header */}
+      <div className="flex justify-between items-center p-4 border-b border-gray-700">
+        <h2 className="text-lg font-semibold text-white">{title}</h2>
+      </div>
 
-      {/* Positions Data */}
+      {/* Positions List */}
       <div className="overflow-y-auto h-[89.5%] p-3">
-        {positions.length > 0 ? (
-          positions.map((position, index) => (
+        {positions
+          .filter((pos) => pos.type === "buy" && pos.status === "executed")
+          .map((position, index) => (
             <div
               key={index}
-              className={`flex items-center justify-between p-3 mb-2 rounded-lg cursor-pointer transition-colors ${
-                position.status === "executed" ? "bg-green-900" : "bg-gray-700"
-              } hover:bg-gray-600`}
+              className="flex items-center justify-between p-3 mb-2 rounded-lg bg-gray-900 hover:bg-green-900 transition-colors cursor-pointer"
               onClick={() => selectedStock(position.stockSymbol)}
             >
-              {/* Stock Symbol */}
-              <span className="text-white text-sm font-medium truncate w-24">
-                {position.stockSymbol.toUpperCase()}
-              </span>
-
-              {/* Position Details */}
-              <div className="flex items-center gap-2">
-                <span
-                  className={`px-2 py-1 text-xs font-semibold rounded ${
-                    position.type === "buy" ? "bg-blue-500" : "bg-red-500"
-                  }`}
-                >
-                  {position.type.toUpperCase()}
+              {/* Stock Info */}
+              <div className="flex flex-col">
+                <span className="text-white font-medium">
+                  {position.stockSymbol.toUpperCase()}
                 </span>
-                {position.type === "buy" ? (
-                  <>
-                    <span className="text-xs font-medium bg-gray-600 px-2 py-1 rounded">
-                      B: {position.buyPrice.toFixed(1)}
-                    </span>
-                    <span className="text-xs font-medium bg-gray-600 px-2 py-1 rounded">
-                      Q: {position.quantity}
-                    </span>
-                    <span
-                      className={`text-xs font-medium px-2 py-1 rounded ${
-                        position.status === "executed"
-                          ? "bg-green-500"
-                          : "bg-gray-600"
-                      }`}
-                    >
-                      {position.status === "executed" ? "OPEN" : "CLOSED"}
-                    </span>
-                  </>
-                ) : (
-                  <>
-                    <span className="text-xs font-medium bg-gray-600 px-2 py-1 rounded">
-                      S: {position.sellPrice.toFixed(1)}
-                    </span>
-                    <span className="text-xs font-medium bg-gray-600 px-2 py-1 rounded">
-                      Q: {position.quantity}
-                    </span>
-                    <span className="text-xs font-medium bg-gray-600 px-2 py-1 rounded">
-                      CLOSED
-                    </span>
-                  </>
-                )}
+                <span className="text-xs text-gray-300">
+                  Avg Price: ₹{position.buyPrice.toFixed(2)}
+                </span>
               </div>
 
-              {/* Sell Button */}
-              {position.type === "buy" && position.status !== "closed" && (
+              {/* Quantity */}
+              <div className="flex items-center gap-4">
+                <div className="text-right">
+                  <div className="text-xs text-gray-300">
+                    Qty: {position.remainingQuantity}
+                  </div>
+                </div>
+
+                {/* Sell Button */}
                 <button
-                  className="bg-green-600 text-white px-3 ml-2 py-1 rounded hover:bg-green-700 transition-colors"
+                  className="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700 transition-colors"
                   onClick={(e) => {
-                    e.stopPropagation(); // Prevent triggering the parent onClick
-                    sellOrder(position.stockSymbol, position.remainingQuantity);
+                    e.stopPropagation();
+                    handleSellClick(position);
                   }}
                 >
                   Sell
                 </button>
-              )}
+              </div>
             </div>
-          ))
-        ) : (
-          <p className="text-gray-400 text-center">No positions</p>
-        )}
+          ))}
       </div>
+
+      <SellOrderModal
+        isOpen={isSellModalOpen}
+        onClose={() => setSellModalOpen(false)}
+        onSubmit={handleSellSubmit}
+        currentPrice={currentMarketPrice}
+        stockSymbol={selectedPosition?.stockSymbol || ""}
+        maxQuantity={selectedPosition?.remainingQuantity || 0}
+      />
     </div>
   );
 };

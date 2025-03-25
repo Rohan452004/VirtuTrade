@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import io from "socket.io-client";
-import { FaEdit } from "react-icons/fa";
+import { FaEdit, FaTimes } from "react-icons/fa";
 import ModifyAmount from "./ModifyAmount";
 
 const socket = io(import.meta.env.VITE_APP_WEB_URL); // server URL
@@ -61,7 +61,7 @@ const Orders = ({ title, selectedStock, getPositions, positions }) => {
           type,
         },
         {
-            withCredentials:true,
+          withCredentials: true,
         }
       );
 
@@ -122,7 +122,7 @@ const Orders = ({ title, selectedStock, getPositions, positions }) => {
       const res = await axios.delete(
         `${import.meta.env.VITE_APP_WEB_URL}/api/position/remove/${id}`,
         {
-            withCredentials:true,
+          withCredentials: true,
         }
       );
 
@@ -144,121 +144,134 @@ const Orders = ({ title, selectedStock, getPositions, positions }) => {
 
   return (
     <div className="border border-gray-600 rounded-lg bg-gray-800 shadow-lg w-full lg:w-96 h-[48.5vh] overflow-hidden">
-      {/* Orders Title */}
-      <h2 className="text-lg font-semibold text-white p-4 border-b border-gray-700">
-        {title}
-      </h2>
+      {/* Header */}
+      <div className="flex items-center justify-between p-4 border-b border-gray-700">
+        <h2 className="text-lg font-semibold text-white">{title}</h2>
+        <span className="text-xs text-gray-400">
+          {positions.length} orders
+        </span>
+      </div>
 
-      {/* Orders Data */}
+      {/* Orders List */}
       <div className="overflow-y-auto h-[39vh] p-3">
         {positions.length > 0 ? (
           positions.map((position, index) => (
             <div
               key={index}
-              className={`flex items-center justify-between p-3 mb-2 rounded-lg cursor-pointer transition-colors ${
-                position.status === "executed" ? "bg-green-900" : "bg-gray-700"
-              } hover:bg-gray-600`}
-              onClick={() => selectedStock(position.stockSymbol)}
+              className={`group flex items-center justify-between p-3 mb-2 rounded-lg transition-all ${
+                position.status === "executed"
+                  ? "bg-green-900/30"
+                  : "bg-gray-700 hover:bg-gray-600"
+              }`}
             >
-              {/* Stock Symbol */}
-              <span className="text-white text-sm font-medium truncate w-24">
-                {position.stockSymbol.toUpperCase()}
-              </span>
+              {/* Left Section */}
+              <div className="flex items-center gap-3 flex-1">
+                {/* Stock Symbol */}
+                <div className="flex flex-col min-w-[70px]">
+                  <span className="text-white font-medium text-sm">
+                    {position.stockSymbol.toUpperCase()}
+                  </span>
+                  <span className="text-xs text-gray-400">
+                    {position.type === "buy" ? "Buy" : "Sell"}
+                  </span>
+                </div>
 
-              {/* Position Details */}
-              <div className="flex items-center gap-2">
-                {position.type === "buy" ? (
-                  <>
-                    <span className="px-2 py-1 text-xs font-semibold rounded bg-blue-500">
-                      {position.type.toUpperCase()}
+                {/* Order Details */}
+                <div className="flex items-center gap-2">
+                  <span
+                    className={`px-2 py-1 text-xs font-semibold rounded ${
+                      position.type === "buy"
+                        ? "bg-blue-500/20 text-blue-400"
+                        : "bg-red-500/20 text-red-400"
+                    }`}
+                  >
+                    {position.type.toUpperCase()}
+                  </span>
+
+                  <div className="flex flex-col">
+                    <span className="text-xs text-gray-300">
+                      Price:{" "}
+                      {position.type === "buy"
+                        ? position?.buyPrice.toFixed(1)
+                        : position?.sellPrice.toFixed(1)}
                     </span>
-                    <span
-                      className={`px-2 py-1 text-xs font-semibold rounded ${
-                        position?.status === "executed" ||
-                        position?.status === "closed"
-                          ? "bg-green-500"
-                          : "bg-gray-600"
-                      }`}
-                    >
-                      {position?.status === "executed" ||
-                      position?.status === "closed"
-                        ? "EXECUTED"
-                        : "PENDING"}
+                    <span className="text-xs text-gray-300">
+                      Qty: {position.quantity}
                     </span>
-                  </>
-                ) : (
-                  <>
-                    <span className="px-2 py-1 text-xs font-semibold rounded bg-red-500">
-                      {position.type.toUpperCase()}
-                    </span>
-                    <span
-                      className={`px-2 py-1 text-xs font-semibold rounded ${
-                        position?.sellStatus === "executed"
-                          ? "bg-green-500"
-                          : "bg-gray-600"
-                      }`}
-                    >
-                      {position?.sellStatus?.toUpperCase()}
-                    </span>
-                  </>
-                )}
-                <span className="px-2 py-1 text-xs font-medium bg-gray-600 rounded">
-                  {position.type === "buy"
-                    ? `B:${position?.buyPrice.toFixed(1)}`
-                    : `S:${position?.sellPrice.toFixed(1)}`}
-                </span>
-                <span className="px-2 py-1 text-xs font-medium bg-gray-600 rounded">
-                  Q: {position.quantity}
-                </span>
+                  </div>
+                </div>
               </div>
 
-              {/* Edit Icon */}
-              {position?.status !== "executed" &&
-                position?.status !== "closed" &&
-                position?.sellStatus !== "executed" && (
-                  <FaEdit
-                    className="text-gray-400 hover:text-green-500 cursor-pointer transition-colors"
-                    onClick={(e) => {
-                      e.stopPropagation(); // Prevent triggering the parent onClick
-                      setDialogOpen(true);
-                      setSelectedPositionId(position._id);
-                      setPrice(
-                        position.type === "buy"
-                          ? position?.buyPrice
-                          : position?.sellPrice
-                      );
-                      setQty(position.quantity);
-                      setStockName(position.stockSymbol);
-                      setType(position.type);
-                    }}
-                  />
-                )}
-
-              {/* Cancel Button */}
-              {(position?.status === "pending" ||
-                position?.sellStatus === "pending") && (
-                <button
-                  className="bg-red-600 text-white px-0 py-1 rounded hover:bg-red-700 transition-colors"
-                  onClick={(e) => {
-                    e.stopPropagation(); // Prevent triggering the parent onClick
-                    cancelOrder(
-                      position._id,
-                      position.buyPrice,
-                      position.quantity
-                    );
-                  }}
+              {/* Right Section */}
+              <div className="flex items-center gap-3">
+                {/* Status */}
+                <span
+                  className={`px-2 py-1 text-xs font-semibold rounded ${
+                    position.status === "executed" ||
+                    position?.sellStatus === "executed"
+                      ? "bg-green-500/20 text-green-400"
+                      : "bg-gray-500/20 text-gray-400"
+                  }`}
                 >
-                  Cancel
-                </button>
-              )}
+                  {position.status === "executed" ||
+                  position?.sellStatus === "executed"
+                    ? "EXECUTED"
+                    : "PENDING"}
+                </span>
+
+                {/* Actions */}
+                <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                  {(position?.status === "pending" ||
+                    position?.sellStatus === "pending") && (
+                    <>
+                      <button
+                        className="p-1.5 rounded-lg bg-gray-500/20 hover:bg-gray-500/30 text-gray-400 hover:text-white transition-colors"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setDialogOpen(true);
+                          setSelectedPositionId(position._id);
+                          setPrice(
+                            position.type === "buy"
+                              ? position?.buyPrice
+                              : position?.sellPrice
+                          );
+                          setQty(position.quantity);
+                          setStockName(position.stockSymbol);
+                          setType(position.type);
+                        }}
+                      >
+                        <FaEdit className="text-lg" />
+                      </button>
+
+                      <button
+                        className="p-1.5 rounded-lg bg-red-500/20 hover:bg-red-500/30 text-red-400 hover:text-white transition-colors"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          cancelOrder(
+                            position._id,
+                            position.buyPrice,
+                            position.quantity
+                          );
+                        }}
+                      >
+                        <FaTimes className="text-lg" />
+                      </button>
+                    </>
+                  )}
+                </div>
+              </div>
             </div>
           ))
         ) : (
-          <p className="text-gray-400 text-center">No orders</p>
+          <div className="flex flex-col items-center justify-center h-full">
+            <p className="text-gray-400 mb-2">No active orders</p>
+            <span className="text-xs text-gray-600">
+              Place orders from the trading panel
+            </span>
+          </div>
         )}
       </div>
 
-      {/* Modify Amount Dialog */}
       <ModifyAmount
         isOpen={isDialogOpen}
         data={{ price, qty, stockName }}

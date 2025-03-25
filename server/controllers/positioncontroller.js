@@ -10,15 +10,17 @@ const buy = async (req, res) => {
 
   try {
     let status = "pending";
+    let executionprice = buyPrice;
     if (buyPrice >= currentStockPrice) {
       status = "executed";
+      executionprice = currentStockPrice;
     }
 
     const position = new BuyPosition({
       type: "buy",
       userId,
       stockSymbol,
-      buyPrice,
+      buyPrice: executionprice,
       quantity,
       remainingQuantity: quantity,
       status,
@@ -37,6 +39,8 @@ const sell = async (req, res) => {
   const { stockSymbol, sellPrice, marketPrice, quantity } = req.body;
 
   const userId = req.user.userId;
+
+  console.log(req.body);
 
   try {
     const position = await BuyPosition.findOne({
@@ -65,7 +69,7 @@ const sell = async (req, res) => {
         userId,
         stockSymbol,
         buyPrice: position.buyPrice,
-        sellPrice,
+        sellPrice: marketPrice,
         quantity,
         sellStatus: "executed",
         sellId: position._id,
@@ -82,13 +86,13 @@ const sell = async (req, res) => {
 
       await position.save();
 
-      const profit = (sellPrice - position.buyPrice) * quantity;
+      const profit = (marketPrice - position.buyPrice) * quantity;
 
       const history = new History({
         userId,
         stockSymbol,
         buyPrice: position.buyPrice,
-        sellPrice,
+        sellPrice : marketPrice,
         quantity,
         profit,
       });
