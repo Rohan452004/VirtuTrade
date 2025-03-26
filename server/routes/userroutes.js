@@ -6,6 +6,7 @@ const {
   getStockData,
   updateBalance,
   sendotp,
+  resetAccount,
 } = require("../controllers/usercontroller");
 
 const {
@@ -25,6 +26,7 @@ router.post("/users/login", loginUser);
 router.get("/users/:email", getUserData);
 router.patch("/users/:id", updateBalance);
 router.get("/stock/:symbol", getStockData);
+router.post("/account/reset", auth, resetAccount);
 
 router.post("/users/reset-password-token", resetPasswordToken);
 router.post("/users/reset-password", resetPassword);

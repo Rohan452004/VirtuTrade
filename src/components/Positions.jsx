@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
+import toast from "react-hot-toast";
 
 const SellOrderModal = ({
   isOpen,
@@ -26,7 +27,7 @@ const SellOrderModal = ({
     const sellQuantity = parseInt(quantity);
 
     if (sellQuantity > maxQuantity) {
-      alert("Quantity exceeds available shares");
+      toast.warning("Quantity exceeds available shares");
       return;
     }
 
@@ -147,7 +148,7 @@ const Positions = ({
     try {
 
           if (!marketPrice) {
-            alert("Could not fetch current market price");
+            toast.error("Could not fetch current market price");
             return;
           }
       const response = await axios.post(
@@ -161,14 +162,14 @@ const Positions = ({
         { withCredentials: true }
       );
 
-    //   user.balance = response.data.user.balance;
+      user.balance = response.data.balance;
       sessionStorage.setItem("user", JSON.stringify(user));
       getExecutedPositions();
       setSellModalOpen(false);
-      alert(response.data.message);
+      toast.success(response.data.message);
     } catch (error) {
       console.error("Sell error:", error);
-      alert(error.response?.data?.message || "Failed to place sell order");
+      toast.error(error.response?.data?.message || "Failed to place sell order");
     }
   };
 
@@ -176,7 +177,7 @@ const Positions = ({
     try {
       const price = await fetchStockPrice(position.stockSymbol);
       if (!price) {
-        alert("Failed to fetch current market price");
+        toast.error("Failed to fetch current market price");
         return;
       }
 

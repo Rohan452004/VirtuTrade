@@ -3,6 +3,7 @@ import axios from "axios";
 import io from "socket.io-client";
 import { FaEdit, FaTimes } from "react-icons/fa";
 import ModifyAmount from "./ModifyAmount";
+import toast from "react-hot-toast";
 
 const socket = io(import.meta.env.VITE_APP_WEB_URL); // server URL
 
@@ -22,7 +23,7 @@ const Orders = ({ title, selectedStock, getPositions, positions }) => {
       getPositions();
       user.balance = data?.balance || user.balance;
       sessionStorage.setItem("user", JSON.stringify(user));
-      alert(data.stockSymbol + " " + data.status);
+      toast.success(data.stockSymbol + " " + data.status);
     });
 
     return () => {
@@ -39,13 +40,13 @@ const Orders = ({ title, selectedStock, getPositions, positions }) => {
       let difference = oldInvestment - newInvestment;
 
       if (newPrice === price && newQty === qty) {
-        alert("No changes done.");
+        toast.warning("No changes done.");
         return;
       }
 
       newBalance = user.balance + difference;
       if (newBalance < 0) {
-        alert("Insufficient account balance.");
+        toast.error("Insufficient account balance.");
         return;
       }
     }
@@ -73,12 +74,12 @@ const Orders = ({ title, selectedStock, getPositions, positions }) => {
         }
         getPositions();
         setDialogOpen(false);
-        alert(res.data.message);
+        toast.success(res.data.message);
       } else {
-        alert("Modification Error. Try again: " + res.data.message);
+        toast.error("Modification Error. Try again: " + res.data.message);
       }
     } catch (error) {
-      alert("Modification Error. Try again");
+      toast.error("Modification Error. Try again");
       console.error("Error: ", error.message);
     }
   };
@@ -131,7 +132,7 @@ const Orders = ({ title, selectedStock, getPositions, positions }) => {
         sessionStorage.setItem("user", JSON.stringify(user));
         updateBalance(user.balance);
         getPositions();
-        alert(res.data.message);
+        toast.success(res.data.message);
       }
     } catch (error) {
       console.error("Error removing stock:", error);
@@ -147,9 +148,7 @@ const Orders = ({ title, selectedStock, getPositions, positions }) => {
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-gray-700">
         <h2 className="text-lg font-semibold text-white">{title}</h2>
-        <span className="text-xs text-gray-400">
-          {positions.length} orders
-        </span>
+        <span className="text-xs text-gray-400">{positions.length} orders</span>
       </div>
 
       {/* Orders List */}
@@ -207,14 +206,18 @@ const Orders = ({ title, selectedStock, getPositions, positions }) => {
                 {/* Status */}
                 <span
                   className={`px-2 py-1 text-xs font-semibold rounded ${
-                    position.status === "executed" ||
-                    position?.sellStatus === "executed"
+                    position.status === "closed"
+                      ? "bg-gray-500/20 text-gray-400"
+                      : position.status === "executed" ||
+                        position?.sellStatus === "executed"
                       ? "bg-green-500/20 text-green-400"
                       : "bg-gray-500/20 text-gray-400"
                   }`}
                 >
-                  {position.status === "executed" ||
-                  position?.sellStatus === "executed"
+                  {position.status === "closed"
+                    ? "CLOSED"
+                    : position.status === "executed" ||
+                      position?.sellStatus === "executed"
                     ? "EXECUTED"
                     : "PENDING"}
                 </span>

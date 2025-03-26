@@ -12,6 +12,7 @@
     "dev": "concurrently -n \"client,server\" -c \"bgBlue,bgYellow\" \"npm start\" \"npm run server\""
   },
   "dependencies": {
+    "@heroicons/react": "^1.0.6",
     "@tailwindcss/vite": "^4.0.13",
     "axios": "^1.8.3",
     "concurrently": "^9.1.2",

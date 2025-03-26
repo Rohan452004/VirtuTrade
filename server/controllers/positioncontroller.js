@@ -99,17 +99,20 @@ const sell = async (req, res) => {
 
       await history.save();
 
-      const user = await User.findById(userId);
-      if (user) {
-        user.balance = user.balance + position.buyPrice * quantity + profit;
-        await user.save();
-      }
+      const updatedUser = await User.findByIdAndUpdate(
+        userId,
+        { $inc: { balance: position.buyPrice * quantity + profit } },
+        { new: true }
+      );
+
+      const balance = updatedUser.balance;
 
       return res.json({
         success: true,
         message: "Stock sold successfully",
         history,
-        user,
+        updatedUser,
+        balance,
       });
     } else {
       // If price is not reached, mark status as "pending" server will handel this order

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
+import toast from "react-hot-toast";
 
 const StockData = ({
   newSymbol,
@@ -46,9 +47,9 @@ const StockData = ({
 
       if (res.data.success) {
         getWatchlist();
-        alert("Added to Watchlist");
+        toast.success("Added to Watchlist");
       } else {
-        alert("Not Added to Watchlist");
+        toast.error("Not Added to Watchlist");
       }
     } catch (error) {
       console.error("Error adding stock:", error);
@@ -70,7 +71,7 @@ const StockData = ({
 
   const handleBuy = async () => {
     if (user.balance < requiredAmount) {
-      alert("Warning: Your current balance is below the required amount.");
+      toast.warning("Warning: Your current balance is below the required amount.");
       return;
     } else if (
       buyPrice === "" ||
@@ -78,7 +79,7 @@ const StockData = ({
       buyPrice === 0 ||
       quantity === 0
     ) {
-      alert("Warning: All fields are required.");
+      toast.warning("Warning: All fields are required.");
       return;
     }
 
@@ -97,7 +98,7 @@ const StockData = ({
       );
 
       if (response.data.success) {
-        alert(response.data.message);
+        toast.success(response.data.message);
         updateBalance();
         getPositions();
         user.balance = user.balance - requiredAmount;
@@ -118,7 +119,7 @@ const StockData = ({
       buyPrice === 0 ||
       quantity === 0
     ) {
-      alert("Warning: All fields are required.");
+      toast.warning("Warning: All fields are required.");
       return;
     }
 
@@ -140,16 +141,16 @@ const StockData = ({
         getPositions();
         user.balance = response.data.user?.balance;
         sessionStorage.setItem("user", JSON.stringify(user));
-        alert(response.data.message);
+        toast.success(response.data.message);
         setBuyPrice("");
         setQuantity("");
       } else if (response.data.success && !response.data.user) {
         getPositions();
-        alert(response.data.message);
+        toast.success(response.data.message);
         setBuyPrice("");
         setQuantity("");
       } else {
-        alert(response.data.message);
+        toast.success(response.data.message);
       }
     } catch (error) {
       console.error("Error:", error.message);

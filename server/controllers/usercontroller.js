@@ -1,4 +1,7 @@
 const User = require("../models/user");
+const { Position } = require("../models/Position");
+const Watchlist = require("../models/Watchlist");
+const History = require("../models/History");
 const OTP = require("../models/OTP");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
@@ -206,6 +209,39 @@ const sendotp = async (req, res) => {
   }
 };
 
+const resetAccount = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const INITIAL_BALANCE = 1000000; 
+
+    // Reset user balance
+    const user = await User.findByIdAndUpdate(
+      userId,
+      { balance: INITIAL_BALANCE },
+      { new: true }
+    );
+
+    // Delete all associated data
+    await Promise.all([
+      Position.deleteMany({ userId: userId }),
+      Watchlist.deleteMany({ userId: userId }),
+      History.deleteMany({ userId: userId }),
+    ]);
+
+    res.status(200).json({
+      success: true,
+      newBalance: user.balance,
+      message: "Account reset successfully",
+    });
+  } catch (error) {
+    console.error("Reset error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server error during account reset",
+    });
+  }
+};
+
 
 module.exports = {
   createUser,
@@ -214,4 +250,5 @@ module.exports = {
   getStockData,
   updateBalance,
   sendotp,
+  resetAccount,
 };
