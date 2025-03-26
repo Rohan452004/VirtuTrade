@@ -18,19 +18,16 @@ const positionRoutes = require("./routes/positionroutes");
 
 const PORT = process.env.PORT || 4000;
 const frontendurl = process.env.FRONTEND_URL;
-
+app.use(cookieparser());
 db.connectDB();
 app.use(
   cors({
     origin: process.env.FRONTEND_URL || "http://localhost:5173",
     credentials: true, 
-    methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
-    allowedHeaders: ["Content-Type", "Authorization"], 
   })
 );
 
 
-app.use(cookieparser());
 app.use(express.json());
 app.use("/api", userRoutes);
 app.use("/api/watchlist", watchlistRoutes);
@@ -38,6 +35,12 @@ app.use("/api/position", positionRoutes);
 
 app.get('/', (req, res) => {
     res.send("<h1>VirtuTrade. Your server is Live</h1>");
+});
+
+// ✅ Test route to check cookies
+app.get("/test-cookies", (req, res) => {
+  console.log("Cookies received:", req.cookies);
+  res.json({ cookies: req.cookies });
 });
 
 const server = http.createServer(app);
