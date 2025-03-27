@@ -23,7 +23,9 @@ db.connectDB();
 app.use(
   cors({
     origin: process.env.FRONTEND_URL || "http://localhost:5173",
-    credentials: true, 
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
+    allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
 
@@ -44,7 +46,14 @@ app.get("/test-cookies", (req, res) => {
 });
 
 const server = http.createServer(app);
-const io = socketIo(server, { cors: { origin: '*' } });
+const io = socketIo(server, {
+  cors: {
+    origin: process.env.FRONTEND_URL || "http://localhost:5173",
+    methods: ["GET", "POST"],
+    credentials: true,
+    transports: ["websocket", "polling"],
+  },
+});
 
 // Get the latest stock price
 const fetchStockPrice = async (symbol) => {
