@@ -77,46 +77,53 @@ const createUser = async (req, res) => {
 };
 
 const loginUser = async (req, res) => {
-    try {
-      const { email, password } = req.body;
+  try {
+    const { email, password } = req.body;
 
-      const user = await User.findOne({ email });
-
-      if (!user) {
-        return res
-          .status(404)
-          .json({ success: false, message: "User not found" });
-      }
-
-      const isMath = await bcrypt.compare(password, user.password);
-      if (!isMath) {
-        return res
-          .status(401)
-          .json({ success: false, message: "Invalid username and password" });
-      }
-
-      const token = jwt.sign({ userId: user._id, email: user.email }, process.env.JWT_SECRET, {
-        expiresIn: "24h",
-      });
-
-      user.token = token;
-      user.save();
-      const options = {
-        expires: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
-        httpOnly: true,
-      };
-      res.cookie("token", token, options).status(200).json({
-        success: true,
-        token,
-        user,
-        message: `User Login Success`,
-      });
-    } catch (error) {
-      console.error("Error in login", error.message);
-      res
-        .status(500)
-        .json({ success: false, message: "Internal server error" });
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found" });
     }
+
+    const isMatch = await bcrypt.compare(password, user.password); // Fixed typo from `isMath` to `isMatch`
+    if (!isMatch) {
+      return res
+        .status(401)
+        .json({ success: false, message: "Invalid username or password" });
+    }
+
+    const token = jwt.sign(
+      { userId: user._id, email: user.email },
+      process.env.JWT_SECRET,
+      {
+        expiresIn: "24h",
+      }
+    );
+
+    user.token = token;
+    await user.save(); // Ensure the user token is saved properly
+
+    // ✅ Corrected Cookie Options
+    res.cookie("token", token, {
+      httpOnly: true, // Prevents client-side access
+      secure: true, // Required for HTTPS (Remove for local testing)
+      sameSite: "None", // Required for cross-origin requests
+      path: "/",
+      expires: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000), // 3 days expiry
+    });
+
+    res.status(200).json({
+      success: true,
+      token,
+      user,
+      message: "User Login Success",
+    });
+  } catch (error) {
+    console.error("Error in login:", error.message);
+    res.status(500).json({ success: false, message: "Internal server error" });
+  }
 };
 
 const getUserData = async (req, res) => {
