@@ -5,4 +5,11 @@ import tailwindcss from "@tailwindcss/vite";
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react(), tailwindcss()],
+  base: "/", // Ensure correct base path
+  build: {
+    outDir: "dist",
+  },
+  server: {
+    historyApiFallback: true, // Ensures proper routing
+  },
 });
