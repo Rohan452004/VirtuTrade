@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import axios from "axios";
+import { Eye, EyeOff } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import toast from "react-hot-toast";
@@ -7,6 +8,7 @@ import toast from "react-hot-toast";
 function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
 
   async function getUserData() {
@@ -72,7 +74,10 @@ function LoginPage() {
         </h2>
         <form onSubmit={login}>
           <div className="mb-6">
-            <label htmlFor="email" className="block text-sm font-medium text-gray-400 mb-2">
+            <label
+              htmlFor="email"
+              className="block text-sm font-medium text-gray-400 mb-2"
+            >
               Email
             </label>
             <input
@@ -85,24 +90,32 @@ function LoginPage() {
               required
             />
           </div>
-          <div className="mb-6">
-            <label htmlFor="password" className="block text-sm font-medium text-gray-400 mb-2">
+          <div className="relative">
+            <label
+              htmlFor="email"
+              className="block text-sm font-medium text-gray-400 mb-2"
+            >
               Password
             </label>
             <input
-              type="password"
-              id="password"
-              value={password}
+              type={showPassword ? "text" : "password"}
+              className="w-full p-3 border border-gray-700 rounded-md bg-gray-800 text-white focus:outline-none focus:ring-2 focus:ring-blue-400"
+              placeholder="Enter Your Password"
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500"
-              placeholder="Enter your password"
+              value={password}
               required
             />
+            <span
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3 top-10 cursor-pointer text-gray-400"
+            >
+              {showPassword ? <EyeOff /> : <Eye />}
+            </span>
           </div>
 
           <motion.button
             type="submit"
-            className="w-full px-6 py-3 bg-green-500 text-white text-lg font-semibold rounded-lg shadow-lg hover:bg-green-400 transition-all border border-green-400"
+            className="w-full px-6 py-3 bg-green-500 text-white text-lg font-semibold rounded-lg shadow-lg hover:bg-green-400 transition-all border border-green-400 mt-6"
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
           >

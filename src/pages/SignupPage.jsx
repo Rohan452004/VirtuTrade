@@ -3,6 +3,7 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import toast from "react-hot-toast";
+import { Eye, EyeOff } from "lucide-react";
 
 function SignUpPage() {
   const [step, setStep] = useState(1); // Step 1 or Step 2
@@ -15,6 +16,8 @@ function SignUpPage() {
   const [otp, setOtp] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false); // Loading state
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const navigate = useNavigate();
 
   // Handle input changes for Step 1
@@ -170,7 +173,7 @@ function SignUpPage() {
                 required
               />
             </div>
-            <div className="mb-6">
+            <div className="mb-6 relative">
               <label
                 htmlFor="password"
                 className="block text-sm font-medium text-gray-400 mb-2"
@@ -178,7 +181,7 @@ function SignUpPage() {
                 Password
               </label>
               <input
-                type="password"
+                type={showPassword ? "text" : "password"}
                 id="password"
                 name="password"
                 value={formData.password}
@@ -187,8 +190,16 @@ function SignUpPage() {
                 placeholder="Enter your password"
                 required
               />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-10 text-gray-400 hover:text-white transition-colors"
+              >
+                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+              </button>
             </div>
-            <div className="mb-6">
+
+            <div className="mb-6 relative">
               <label
                 htmlFor="confirmPassword"
                 className="block text-sm font-medium text-gray-400 mb-2"
@@ -196,7 +207,7 @@ function SignUpPage() {
                 Confirm Password
               </label>
               <input
-                type="password"
+                type={showConfirmPassword ? "text" : "password"}
                 id="confirmPassword"
                 name="confirmPassword"
                 value={formData.confirmPassword}
@@ -205,6 +216,13 @@ function SignUpPage() {
                 placeholder="Confirm your password"
                 required
               />
+              <button
+                type="button"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                className="absolute right-3 top-10 text-gray-400 hover:text-white transition-colors"
+              >
+                {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+              </button>
             </div>
             <motion.button
               type="button"
