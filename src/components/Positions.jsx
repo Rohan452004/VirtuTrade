@@ -129,7 +129,7 @@ const Positions = ({
 }) => {
   const [isSellModalOpen, setSellModalOpen] = useState(false);
   const [selectedPosition, setSelectedPosition] = useState(null);
-  const [currentMarketPrice, setCurrentMarketPrice] = useState(0);
+  const [currentPrices, setCurrentPrices] = useState({});
   const user = JSON.parse(sessionStorage.getItem("user"));
 
   const fetchStockPrice = async (symbol) => {
@@ -144,13 +144,76 @@ const Positions = ({
     }
   };
 
-  const handleSellSubmit = async ({ price, quantity, marketPrice, isMarketOrder }) => {
+  // Fetch current prices for all positions
+  const fetchAllPrices = async () => {
     try {
+      const uniqueSymbols = [
+        ...new Set(
+          positions
+            .filter((pos) => pos.type === "buy" && pos.status === "executed")
+            .map((pos) => pos.stockSymbol)
+        ),
+      ];
 
-          if (!marketPrice) {
-            toast.error("Could not fetch current market price");
-            return;
-          }
+      const pricePromises = uniqueSymbols.map((symbol) =>
+        axios.get(`${import.meta.env.VITE_APP_WEB_URL}/api/stock/${symbol}`)
+      );
+
+      const responses = await Promise.all(pricePromises);
+      const newPrices = {};
+
+      responses.forEach((response, index) => {
+        const symbol = uniqueSymbols[index];
+        newPrices[symbol] =
+          response.data.chart.result[0].meta.regularMarketPrice;
+      });
+
+      setCurrentPrices((prev) => ({ ...prev, ...newPrices }));
+    } catch (error) {
+      console.error("Error fetching prices:", error);
+    }
+  };
+
+  // Calculate total P&L
+  const calculateTotalPnL = () => {
+    return positions
+      .filter((pos) => pos.type === "buy" && pos.status === "executed")
+      .reduce((total, position) => {
+        const currentPrice = currentPrices[position.stockSymbol];
+        if (!currentPrice) return total;
+        const pnl =
+          (currentPrice - position.buyPrice) * position.remainingQuantity;
+        return total + pnl;
+      }, 0);
+  };
+
+  // Calculate position P&L
+  const calculatePositionPnL = (position) => {
+    const currentPrice = currentPrices[position.stockSymbol];
+    if (!currentPrice) return null;
+    return (currentPrice - position.buyPrice) * position.remainingQuantity;
+  };
+
+  // Update prices periodically
+  useEffect(() => {
+    if (positions.length === 0) return;
+
+    fetchAllPrices();
+    const interval = setInterval(fetchAllPrices, 30000);
+    return () => clearInterval(interval);
+  }, [positions]);
+
+  const handleSellSubmit = async ({
+    price,
+    quantity,
+    marketPrice,
+    isMarketOrder,
+  }) => {
+    try {
+      if (!marketPrice) {
+        toast.error("Could not fetch current market price");
+        return;
+      }
       const response = await axios.post(
         `${import.meta.env.VITE_APP_WEB_URL}/api/position/sell`,
         {
@@ -169,7 +232,9 @@ const Positions = ({
       toast.success(response.data.message);
     } catch (error) {
       console.error("Sell error:", error);
-      toast.error(error.response?.data?.message || "Failed to place sell order");
+      toast.error(
+        error.response?.data?.message || "Failed to place sell order"
+      );
     }
   };
 
@@ -181,7 +246,10 @@ const Positions = ({
         return;
       }
 
-      setCurrentMarketPrice(price);
+      setCurrentPrices((prevPrices) => ({
+        ...prevPrices,
+        [position.stockSymbol]: price,
+      }));
       setSelectedPosition(position);
       setSellModalOpen(true);
     } catch (error) {
@@ -190,43 +258,70 @@ const Positions = ({
   };
 
   return (
-    <div className="border border-gray-600 rounded-lg bg-gray-800 shadow-lg w-full lg:w-96 h-[96vh] overflow-hidden">
+    <div className="border border-gray-600 rounded-lg bg-gray-800 shadow-lg w-full lg:w-96 h-[60vh] sm:h-[96vh] overflow-hidden">
+      {/* Total P&L Section */}
+      <div className="pt-4 px-4 border-b border-gray-700">
+        <div className="text-center mb-3">
+          <div className="text-xs text-gray-400 mb-1">Total Profit & Loss</div>
+          <div
+            className={`text-2xl font-bold ${
+              calculateTotalPnL() >= 0 ? "text-green-500" : "text-red-500"
+            }`}
+          >
+            {calculateTotalPnL().toFixed(2)}
+          </div>
+        </div>
+      </div>
+
       {/* Header */}
-      <div className="flex justify-between items-center p-4 border-b border-gray-700">
-        <h2 className="text-lg font-semibold text-white">{title}</h2>
+      <div className="p-4 border-b border-gray-700">
+        <div className="flex justify-between items-center">
+          <h2 className="text-lg font-semibold text-white">{title}</h2>
+          <div className="text-xs text-gray-400">
+            * Live P&L based on current prices
+          </div>
+        </div>
       </div>
 
       {/* Positions List */}
-      <div className="overflow-y-auto h-[89.5%] p-3">
+      <div className="overflow-y-auto h-[72%] sm:h-[82%] p-3">
         {positions
           .filter((pos) => pos.type === "buy" && pos.status === "executed")
-          .map((position, index) => (
-            <div
-              key={index}
-              className="flex items-center justify-between p-3 mb-2 rounded-lg bg-gray-900 hover:bg-green-900 transition-colors cursor-pointer"
-              onClick={() => selectedStock(position.stockSymbol)}
-            >
-              {/* Stock Info */}
-              <div className="flex flex-col">
-                <span className="text-white font-medium">
-                  {position.stockSymbol.toUpperCase()}
-                </span>
-                <span className="text-xs text-gray-300">
-                  Avg Price: ₹{position.buyPrice.toFixed(2)}
-                </span>
-              </div>
+          .map((position, index) => {
+            const pnl = calculatePositionPnL(position);
+            const isPositive = pnl >= 0;
 
-              {/* Quantity */}
-              <div className="flex items-center gap-4">
-                <div className="text-right">
-                  <div className="text-xs text-gray-300">
-                    Qty: {position.remainingQuantity}
+            return (
+              <div
+                key={index}
+                className="flex items-center justify-between p-3 mb-2 rounded-lg bg-gray-900 hover:bg-green-900 transition-colors cursor-pointer"
+                onClick={() => selectedStock(position.stockSymbol)}
+              >
+                {/* Stock Info */}
+                <div className="flex flex-col flex-1">
+                  <div className="flex justify-between items-start mb-1">
+                    <span className="text-white font-medium">
+                      {position.stockSymbol.toUpperCase()}
+                    </span>
+                    {pnl !== null && (
+                      <span
+                        className={`text-xs font-medium ${
+                          isPositive ? "text-green-500" : "text-red-500"
+                        }`}
+                      >
+                        ₹{pnl.toFixed(2)}
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex justify-between text-xs text-gray-300">
+                    <span>Avg: ₹{position.buyPrice.toFixed(2)}</span>
+                    <span>Qty: {position.remainingQuantity}</span>
                   </div>
                 </div>
 
                 {/* Sell Button */}
                 <button
-                  className="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700 transition-colors"
+                  className="ml-4 bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700 transition-colors"
                   onClick={(e) => {
                     e.stopPropagation();
                     handleSellClick(position);
@@ -235,15 +330,15 @@ const Positions = ({
                   Sell
                 </button>
               </div>
-            </div>
-          ))}
+            );
+          })}
       </div>
 
       <SellOrderModal
         isOpen={isSellModalOpen}
         onClose={() => setSellModalOpen(false)}
         onSubmit={handleSellSubmit}
-        currentPrice={currentMarketPrice}
+        currentPrice={currentPrices[selectedPosition?.stockSymbol] || 0}
         stockSymbol={selectedPosition?.stockSymbol || ""}
         maxQuantity={selectedPosition?.remainingQuantity || 0}
       />

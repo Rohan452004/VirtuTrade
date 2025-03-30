@@ -144,7 +144,7 @@ const Orders = ({ title, selectedStock, getPositions, positions }) => {
   }, []);
 
   return (
-    <div className="border border-gray-600 rounded-lg bg-gray-800 shadow-lg w-full lg:w-96 h-[48.5vh] overflow-hidden">
+    <div className="border border-gray-600 rounded-lg bg-gray-800 shadow-lg w-full lg:w-96 h-[60vh] sm:h-[48.5vh] overflow-hidden">
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-gray-700">
         <h2 className="text-lg font-semibold text-white">{title}</h2>
@@ -152,7 +152,7 @@ const Orders = ({ title, selectedStock, getPositions, positions }) => {
       </div>
 
       {/* Orders List */}
-      <div className="overflow-y-auto h-[39vh] p-3">
+      <div className="overflow-y-auto h-[53vh] sm:h-[39vh] p-3">
         {positions.length > 0 ? (
           positions.map((position, index) => (
             <div

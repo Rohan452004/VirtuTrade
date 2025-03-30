@@ -59,7 +59,7 @@ const Navbar = ({ onSearch }) => {
       <div className="container mx-auto flex flex-col md:flex-row gap-4 items-start md:items-center">
         {/* Logo and Balance - Top Row Mobile */}
         <div className="flex justify-between w-full md:w-auto">
-          <img src={logo} alt="Logo" className="h-10 w-auto rounded-lg" />
+          <img src={logo} alt="Logo" className="h-8 w-auto rounded-lg" />
           <div className="md:hidden bg-gray-800 px-3 py-1 rounded-lg">
             <span className="font-medium mr-3">{user.username}</span>
             <span className="text-green-400 font-medium">
@@ -68,51 +68,7 @@ const Navbar = ({ onSearch }) => {
           </div>
         </div>
 
-        {/* Search Bar - Center Stage Mobile */}
-        <div className="w-full md:flex-1 md:max-w-xl relative group">
-          <div className="flex flex-col md:flex-row gap-2 w-full">
-            <div className="flex-1 relative">
-              <input
-                type="text"
-                placeholder="🔍 Search TATAMOTORS, RELIANCE..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value.toUpperCase())}
-                className="w-full px-4 py-3 rounded-xl bg-gray-800 text-white 
-                         focus:outline-none focus:ring-2 focus:ring-blue-500
-                         placeholder-gray-400 transition-all"
-              />
-              <button
-                onClick={handleSearch}
-                className="md:hidden absolute right-2 top-2 bg-gradient-to-r from-blue-500 to-blue-600 
-                          px-4 py-1 rounded-lg text-white font-medium shadow-lg"
-              >
-                Go
-              </button>
-            </div>
-            <button
-              onClick={handleSearch}
-              className="hidden md:flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 
-                       text-white rounded-xl hover:shadow-blue-glow transition-all"
-            >
-              <svg
-                className="w-5 h-5"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                />
-              </svg>
-              Search
-            </button>
-          </div>
-        </div>
-
-        {/* Right Section - Bottom Row Mobile */}
+        {/* Right Section - Middle Row Mobile */}
         <div className="w-full md:w-auto flex justify-between items-center gap-4">
           {/* Mobile Buttons */}
           <div className="flex gap-2 md:hidden w-full">
@@ -138,6 +94,51 @@ const Navbar = ({ onSearch }) => {
             >
               🔒 Logout
             </button>
+          </div>
+          </div>
+
+          {/* Search Bar - Bottom Stage Mobile */}
+          <div className="w-full md:flex-1 md:max-w-xl relative group">
+            <div className="flex flex-col md:flex-row gap-2 w-full">
+              <div className="flex-1 relative">
+                <input
+                  type="text"
+                  placeholder="🔍 Search TATAMOTORS, RELIANCE..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value.toUpperCase())}
+                  className="w-full px-4 py-3 rounded-xl bg-gray-800 text-white 
+                         focus:outline-none focus:ring-2 focus:ring-blue-500
+                         placeholder-gray-400 transition-all"
+                />
+                <button
+                  onClick={handleSearch}
+                  className="md:hidden absolute right-2 top-2 bg-gradient-to-r from-blue-500 to-blue-600 
+                          px-4 py-1 rounded-lg text-white font-medium shadow-lg"
+                >
+                  Go
+                </button>
+              </div>
+              <button
+                onClick={handleSearch}
+                className="hidden md:flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 
+                       text-white rounded-xl hover:shadow-blue-glow transition-all"
+              >
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                  />
+                </svg>
+                Search
+              </button>
+            </div>
           </div>
 
           {/* Desktop Elements */}
@@ -174,7 +175,6 @@ const Navbar = ({ onSearch }) => {
             </div>
           </div>
         </div>
-      </div>
     </nav>
   );
 };

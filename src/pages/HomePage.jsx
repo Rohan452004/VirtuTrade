@@ -76,12 +76,8 @@ function HomePage() {
 
       {/* Main Content */}
       <div className="w-full mx-auto p-4 flex flex-col lg:flex-row gap-6">
-        {/* Left Section (Watchlist and Orders) */}
-        <div
-          className={`w-full lg:w-1/3 flex flex-col gap-6 ${
-            activeView === "watchlist" ? "block" : "hidden"
-          } lg:block`}
-        >
+        {/* Desktop Left Section (Watchlist + Orders) */}
+        <div className="hidden lg:flex lg:w-1/3 flex-col gap-6">
           <div className="bg-gray-800 rounded-lg shadow-lg p-4 border border-gray-700">
             <Watchlist
               title="Watchlist"
@@ -100,12 +96,59 @@ function HomePage() {
           </div>
         </div>
 
-        {/* Middle Section (Stock Data) */}
-        <div
-          className={`w-full lg:w-1/2 ${
-            activeView === "stock" ? "block" : "hidden"
-          } lg:block`}
-        >
+        {/* Mobile Views */}
+        <div className="lg:hidden w-full">
+          {/* Watchlist Mobile View */}
+          <div className={`${activeView === "watchlist" ? "block" : "hidden"}`}>
+            <div className="bg-gray-800 rounded-lg shadow-lg p-4 border border-gray-700 mb-4">
+              <Watchlist
+                title="Watchlist"
+                selectedStock={setSymbol}
+                getWatchlist={getWatchlist}
+                watchlists={watchlists}
+              />
+            </div>
+          </div>
+
+          {/* Orders Mobile View */}
+          <div className={`${activeView === "orders" ? "block" : "hidden"}`}>
+            <div className="bg-gray-800 rounded-lg shadow-lg p-4 border border-gray-700 mb-4">
+              <Orders
+                title="Orders"
+                selectedStock={setSymbol}
+                getPositions={getPositions}
+                positions={positions}
+              />
+            </div>
+          </div>
+
+          {/* Stock Data Mobile View */}
+          <div className={`${activeView === "stock" ? "block" : "hidden"}`}>
+            <div className="bg-gray-800 rounded-lg shadow-lg p-4 border border-gray-700 mb-4">
+              <StockData
+                newSymbol={symbol}
+                defaultSymbol="TATAMOTORS"
+                getWatchlist={getWatchlist}
+                getPositions={getPositions}
+              />
+            </div>
+          </div>
+
+          {/* Positions Mobile View */}
+          <div className={`${activeView === "positions" ? "block" : "hidden"}`}>
+            <div className="bg-gray-800 rounded-lg shadow-lg p-4 border border-gray-700">
+              <Positions
+                title="Positions"
+                selectedStock={setSymbol}
+                getExecutedPositions={getExecutedPositions}
+                positions={executedPositions}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Desktop Middle Section */}
+        <div className="hidden lg:block lg:w-1/2">
           <div className="bg-gray-800 rounded-lg shadow-lg p-4 border border-gray-700 h-full">
             <StockData
               newSymbol={symbol}
@@ -116,12 +159,8 @@ function HomePage() {
           </div>
         </div>
 
-        {/* Right Section (Positions) */}
-        <div
-          className={`w-full lg:w-2/7 ${
-            activeView === "positions" ? "block" : "hidden"
-          } lg:block`}
-        >
+        {/* Desktop Right Section */}
+        <div className="hidden lg:block lg:w-2/7">
           <div className="bg-gray-800 rounded-lg shadow-lg p-4 border border-gray-700">
             <Positions
               title="Positions"
@@ -135,10 +174,10 @@ function HomePage() {
 
       {/* Mobile Bottom Navigation */}
       <div className="fixed bottom-0 left-0 right-0 lg:hidden bg-gray-900 border-t border-gray-700">
-        <div className="flex justify-around p-2">
+        <div className="grid grid-cols-4 gap-1 p-2">
           <button
             onClick={() => setActiveView("watchlist")}
-            className={`flex flex-col items-center px-4 py-2 rounded-lg ${
+            className={`flex flex-col items-center p-2 rounded-lg ${
               activeView === "watchlist"
                 ? "bg-gray-700 text-amber-400"
                 : "text-gray-400"
@@ -161,8 +200,32 @@ function HomePage() {
           </button>
 
           <button
+            onClick={() => setActiveView("orders")}
+            className={`flex flex-col items-center p-2 rounded-lg ${
+              activeView === "orders"
+                ? "bg-gray-700 text-amber-400"
+                : "text-gray-400"
+            }`}
+          >
+            <svg
+              className="w-6 h-6"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M9 5h6a2 2 0 012 2v11a2 2 0 01-2 2H9a2 2 0 01-2-2V7a2 2 0 012-2zm0 4h6M9 13h6"
+              />
+            </svg>
+            <span className="text-xs mt-1">Orders</span>
+          </button>
+
+          <button
             onClick={() => setActiveView("stock")}
-            className={`flex flex-col items-center px-4 py-2 rounded-lg ${
+            className={`flex flex-col items-center p-2 rounded-lg ${
               activeView === "stock"
                 ? "bg-gray-700 text-amber-400"
                 : "text-gray-400"
@@ -186,7 +249,7 @@ function HomePage() {
 
           <button
             onClick={() => setActiveView("positions")}
-            className={`flex flex-col items-center px-4 py-2 rounded-lg ${
+            className={`flex flex-col items-center p-2 rounded-lg ${
               activeView === "positions"
                 ? "bg-gray-700 text-amber-400"
                 : "text-gray-400"
