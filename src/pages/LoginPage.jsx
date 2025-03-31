@@ -4,6 +4,8 @@ import { Eye, EyeOff } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import toast from "react-hot-toast";
+import { useGoogleLogin } from "@react-oauth/google";
+import GoogleLogo from "../assets/GoogleLogo.png";
 
 function LoginPage() {
   const [email, setEmail] = useState("");
@@ -11,7 +13,7 @@ function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
 
-  async function getUserData() {
+  async function getUserData(email) {
     try {
       const res = await axios.get(
         `${import.meta.env.VITE_APP_WEB_URL}/api/users/${email}`
@@ -40,7 +42,7 @@ function LoginPage() {
       if (res.data.success) {
         localStorage.setItem("token", res.data.token);
         sessionStorage.setItem("userEmail", email);
-        await getUserData();
+        await getUserData(email);
         toast.success("Login successful");
         setTimeout(() => {
           navigate("/home", { state: { email: email } });
@@ -53,6 +55,37 @@ function LoginPage() {
       toast.error("Invalid Credentials");
     }
   }
+
+  // 🔹 Google Login Handler
+  const googleLogin = useGoogleLogin({
+    onSuccess: async (response) => {
+      try {
+        // 🔹 Send only access_token to backend
+        const res = await axios.post(
+          `${import.meta.env.VITE_APP_WEB_URL}/api/auth/google`,
+          {
+            token: response.access_token,
+          },
+          { withCredentials: true }
+        );
+
+        if (res.data.success) {
+          localStorage.setItem("token", res.data.token);
+          sessionStorage.setItem("userEmail", res.data.email);
+          await getUserData(res.data.email);
+          toast.success("Logged in with Google!");
+          setTimeout(() => {
+            navigate("/home", { state: { email: res.data.email } });
+          }, 1000);
+        } else {
+          toast.error("Google login failed!");
+        }
+      } catch (error) {
+        toast.error("Google Authentication Error!");
+      }
+    },
+    onError: () => toast.error("Google Sign-In Failed!"),
+  });
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gray-950 text-white relative overflow-hidden">
@@ -122,6 +155,17 @@ function LoginPage() {
             Login 🔥
           </motion.button>
         </form>
+
+        {/* 🔹 Google Sign-In Button */}
+        <motion.button
+          className="w-full flex items-center justify-center gap-3 bg-white text-black p-3 rounded-md font-semibold shadow-md hover:bg-gray-200 transition-all border border-gray-300 mt-4"
+          onClick={() => googleLogin()}
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+        >
+          <img src={GoogleLogo} alt="Google Logo" className="w-5 h-5" />
+          <span>Continue with Google</span>
+        </motion.button>
 
         {/* Forgot Password & SignUp Links */}
         <div className="mt-4 flex flex-col items-center">

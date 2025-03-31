@@ -7,6 +7,7 @@ const {
   updateBalance,
   sendotp,
   resetAccount,
+  googlelogin,
 } = require("../controllers/usercontroller");
 
 const {
@@ -20,6 +21,7 @@ const router = express.Router();
 
 // Base router '/api'
 //user request
+router.post("/auth/google", googlelogin);
 router.post("/users/sendotp", sendotp);
 router.post("/users/signup", createUser);
 router.post("/users/login", loginUser);

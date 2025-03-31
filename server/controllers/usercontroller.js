@@ -7,6 +7,7 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const axios = require("axios");
 const otpGenerator = require("otp-generator");
+const OAuth2Client = require ("google-auth-library");
 require("dotenv").config();
 
 const createUser = async (req, res) => {
@@ -249,6 +250,59 @@ const resetAccount = async (req, res) => {
   }
 };
 
+const googlelogin = async (req, res) => {
+  console.log("Inside Google Login");
+  try {
+    const { token } = req.body;
+    if (!token) {
+      return res.status(400).json({ success: false, message: "Token is required" });
+    }
+
+    // 🔹 Fetch Google User Info from Backend (to bypass CORS)
+    const googleRes = await axios.get("https://www.googleapis.com/oauth2/v3/userinfo", {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    const { email, name } = googleRes.data;
+
+    // 🔹 Check if user exists in DB
+    let user = await User.findOne({ email });
+    if (!user) {
+      user = new User({ username:name, email, googleAuth: true });
+      await user.save();
+    }
+
+    // 🔹 Generate JWT Token for session
+    const appToken = jwt.sign(
+      { userId: user._id, email: user.email },
+      process.env.JWT_SECRET,
+      { expiresIn: "24h" }
+    );
+
+    console.log("Generated Token", appToken);
+
+    // ✅ Corrected Cookie Options
+    res.cookie("token", appToken, {
+      httpOnly: true, // Prevents client-side access
+      secure: true, // Required for HTTPS (Remove for local testing)
+      sameSite: "None", // Required for cross-origin requests
+      path: "/",
+      expires: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000), // 3 days expiry
+    });
+
+    res.status(200).json({
+      success: true,
+      token: appToken,
+      user,
+      email: user.email,
+      message: "User Login Success",
+    });
+  } catch (error) {
+    console.error("Google Auth Error:", error);
+    res.status(500).json({ success: false, message: "Google Authentication Failed" });
+  }
+};
+
 
 module.exports = {
   createUser,
@@ -258,4 +312,5 @@ module.exports = {
   updateBalance,
   sendotp,
   resetAccount,
+  googlelogin,
 };
