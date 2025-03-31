@@ -240,7 +240,8 @@ const StockData = ({
           className="bg-gray-700 text-white px-3 py-1 rounded text-sm hover:bg-gray-600 transition-colors"
           onClick={addToWatchlist}
         >
-          Add to Watchlist
+          Add
+          <span className="hidden min-[385px]:inline"> to Watchlist</span>
         </button>
       </div>
 
