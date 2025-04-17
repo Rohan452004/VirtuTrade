@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import toast from "react-hot-toast";
+import StockChart from "./StockChart";
 
 const StockData = ({
   newSymbol,
@@ -10,12 +11,13 @@ const StockData = ({
 }) => {
   const [data, setSymbolData] = useState([]);
   const [chartData, setChartData] = useState([]);
-  const [symbol, setNewSymbol] = useState(newSymbol || defaultSymbol); // Initialize with newSymbol or defaultSymbol
+  const [symbol, setNewSymbol] = useState(newSymbol || defaultSymbol);
   const [buyPrice, setBuyPrice] = useState("");
   const [quantity, setQuantity] = useState("");
   const [requiredAmount, setRequiredAmount] = useState();
   const [priceChange, setPriceChange] = useState();
   const [percentageChange, setPercentageChange] = useState();
+  const [showChart, setShowChart] = useState(false);
   const user = JSON.parse(sessionStorage.getItem("user"));
 
   // Update symbol whenever newSymbol changes
@@ -71,7 +73,9 @@ const StockData = ({
 
   const handleBuy = async () => {
     if (user.balance < requiredAmount) {
-      toast.warning("Warning: Your current balance is below the required amount.");
+      toast.warning(
+        "Warning: Your current balance is below the required amount."
+      );
       return;
     } else if (
       buyPrice === "" ||
@@ -159,55 +163,67 @@ const StockData = ({
 
   useEffect(() => {
     const fetchStockData = async () => {
-      if (!symbol) return; // Avoid fetching if no symbol is available
+      if (!symbol) return;
 
       try {
+        // Always use 5m interval
         const response = await axios.get(
-          `${import.meta.env.VITE_APP_WEB_URL}/api/stock/${symbol}`
+          `${import.meta.env.VITE_APP_WEB_URL}/api/stock/${symbol}?interval=5m`
         );
+        
+        if (!response.data?.chart?.result?.[0]) {
+          console.error("Invalid API response:", response.data);
+          return;
+        }
+        
         const chartData = response.data.chart.result[0];
+        setSymbolData(chartData.meta);
 
+        // Make sure we have valid timestamp and quote data
         if (
-          !chartData ||
-          !chartData.timestamp ||
-          !chartData.indicators?.quote[0]
+          !Array.isArray(chartData.timestamp) || 
+          !chartData.indicators?.quote?.[0]
         ) {
-          console.error("Invalid stock data received.");
+          console.error("Missing required chart data");
           return;
         }
 
-        setSymbolData((prevData) => {
-          if (JSON.stringify(prevData) === JSON.stringify(chartData.meta)) {
-            return prevData; // Prevent unnecessary updates
+        // Process timestamps and OHLC data
+        const timestamps = chartData.timestamp;
+        const quotes = chartData.indicators.quote[0];
+        
+        // Create properly formatted data for the chart
+        const formattedData = [];
+        
+        for (let i = 0; i < timestamps.length; i++) {
+          // Only add points with valid close values
+          if (quotes.close[i] !== null && quotes.close[i] !== undefined) {
+            formattedData.push({
+              time: timestamps[i],
+              open: quotes.open[i] !== null ? quotes.open[i] : quotes.close[i],
+              high: quotes.high[i] !== null ? quotes.high[i] : quotes.close[i],
+              low: quotes.low[i] !== null ? quotes.low[i] : quotes.close[i],
+              close: quotes.close[i]
+            });
           }
-          return chartData.meta;
-        });
+        }
 
-        const formattedData = chartData.timestamp.map((time, index) => ({
-          time,
-          open: chartData.indicators.quote[0].open[index],
-          high: chartData.indicators.quote[0].high[index],
-          low: chartData.indicators.quote[0].low[index],
-          close: chartData.indicators.quote[0].close[index],
-        }));
-
-        setChartData((prevData) => {
-          if (JSON.stringify(prevData) === JSON.stringify(formattedData)) {
-            return prevData; // Prevent unnecessary updates
-          }
-          return formattedData;
-        });
+        console.log(`Processed ${formattedData.length} valid data points for chart`);
+        
+        if (formattedData.length > 0) {
+          setChartData(formattedData);
+          setShowChart(true);
+        }
       } catch (error) {
         console.error("Error fetching stock data:", error);
       }
     };
 
-    fetchStockData(); // Fetch immediately
-
-    const intervalId = setInterval(fetchStockData, 5000); // Fetch every 5 seconds
-
-    return () => clearInterval(intervalId); // Cleanup on unmount
-  }, [symbol]); // Depend on symbol
+    fetchStockData();
+    const intervalId = setInterval(fetchStockData, 30000); // 30 seconds
+    
+    return () => clearInterval(intervalId);
+  }, [symbol]); // Only depend on symbol now
 
   useEffect(() => {
     if (!data) return; // Ensure data exists before calculating
@@ -236,13 +252,21 @@ const StockData = ({
             {data.instrumentType}
           </span>
         </div>
-        <button
-          className="bg-gray-700 text-white px-3 py-1 rounded text-sm hover:bg-gray-600 transition-colors"
-          onClick={addToWatchlist}
-        >
-          Add
-          <span className="hidden min-[385px]:inline"> to Watchlist</span>
-        </button>
+        <div className="flex gap-2">
+          <button
+            className="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700 transition-colors"
+            onClick={() => setShowChart(!showChart)}
+          >
+            {showChart ? "Hide Chart" : "View Chart"}
+          </button>
+          <button
+            className="bg-gray-700 text-white px-3 py-1 rounded text-sm hover:bg-gray-600 transition-colors"
+            onClick={addToWatchlist}
+          >
+            Add
+            <span className="hidden min-[385px]:inline"> to Watchlist</span>
+          </button>
+        </div>
       </div>
 
       {/* Stock Header */}
@@ -265,6 +289,16 @@ const StockData = ({
           {percentageChange}%)
         </span>
       </div>
+
+      {/* Stock Chart - No time frame selector anymore */}
+      {showChart && (
+        <div className="mb-6">
+          <StockChart 
+            chartData={chartData} 
+            stockSymbol={symbol}
+          />
+        </div>
+      )}
 
       {/* Stock Info Grid */}
       <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
