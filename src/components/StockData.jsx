@@ -172,18 +172,18 @@ const StockData = ({
         const response = await axios.get(
           `${import.meta.env.VITE_APP_WEB_URL}/api/stock/${symbol}?interval=5m`
         );
-        
+
         if (!response.data?.chart?.result?.[0]) {
           console.error("Invalid API response:", response.data);
           return;
         }
-        
+
         const chartData = response.data.chart.result[0];
         setSymbolData(chartData.meta);
 
         // Make sure we have valid timestamp and quote data
         if (
-          !Array.isArray(chartData.timestamp) || 
+          !Array.isArray(chartData.timestamp) ||
           !chartData.indicators?.quote?.[0]
         ) {
           console.error("Missing required chart data");
@@ -193,10 +193,10 @@ const StockData = ({
         // Process timestamps and OHLC data
         const timestamps = chartData.timestamp;
         const quotes = chartData.indicators.quote[0];
-        
+
         // Create properly formatted data for the chart
         const formattedData = [];
-        
+
         for (let i = 0; i < timestamps.length; i++) {
           // Only add points with valid close values
           if (quotes.close[i] !== null && quotes.close[i] !== undefined) {
@@ -211,7 +211,7 @@ const StockData = ({
         }
 
         console.log(`Processed ${formattedData.length} valid data points for chart`);
-        
+
         if (formattedData.length > 0) {
           setChartData(formattedData);
           setShowChart(true);
@@ -223,7 +223,7 @@ const StockData = ({
 
     fetchStockData();
     const intervalId = setInterval(fetchStockData, 30000); // 30 seconds
-    
+
     return () => clearInterval(intervalId);
   }, [symbol]); // Only depend on symbol now
 
@@ -243,58 +243,52 @@ const StockData = ({
   }, [data]);
 
   return (
-    <div className={`rounded-lg shadow-lg p-6 border w-full h-[96vh] overflow-y-auto ${
-      theme === "dark" 
-        ? "bg-gray-800 border-gray-700" 
-        : "bg-white border-gray-200"
-    }`}>
+    <div className={`rounded-lg shadow-lg p-4 sm:p-6 border w-full h-[96vh] overflow-y-auto ${theme === "dark"
+      ? "bg-gray-800 border-gray-700"
+      : "bg-white border-gray-200"
+      }`}>
       {/* Market Details */}
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex gap-2">
-          <span className={`px-3 py-1 rounded text-sm ${
-            theme === "dark" 
-              ? "bg-gray-700 text-white" 
-              : "bg-gray-200 text-gray-900"
-          }`}>
+      <div className="flex flex-row items-center justify-between gap-2 mb-4 overflow-x-hidden">
+        <div className="flex gap-2 flex-shrink-0">
+          <span className={`px-3 py-1 rounded text-sm whitespace-nowrap ${theme === "dark"
+            ? "bg-gray-700 text-white"
+            : "bg-gray-200 text-gray-900"
+            }`}>
             {data.fullExchangeName}
           </span>
-          <span className={`px-3 py-1 rounded text-sm ${
-            theme === "dark" 
-              ? "bg-gray-700 text-white" 
-              : "bg-gray-200 text-gray-900"
-          }`}>
+          <span className={`px-3 py-1 rounded text-sm whitespace-nowrap ${theme === "dark"
+            ? "bg-gray-700 text-white"
+            : "bg-gray-200 text-gray-900"
+            }`}>
             {data.instrumentType}
           </span>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 justify-end items-center flex-shrink-0">
           <button
-            className="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700 transition-colors"
+            className="bg-blue-600 text-white px-3 py-1.5 rounded text-sm hover:bg-blue-700 transition-colors whitespace-nowrap flex-shrink-0"
             onClick={() => setShowChart(!showChart)}
           >
             {showChart ? "Hide Chart" : "View Chart"}
           </button>
           <button
-            className={`px-3 py-1 rounded text-sm transition-colors ${
-              theme === "dark"
-                ? "bg-gray-700 text-white hover:bg-gray-600"
-                : "bg-gray-300 text-gray-900 hover:bg-gray-400"
-            }`}
+            className={`px-3 py-1.5 rounded text-sm transition-colors whitespace-nowrap flex-shrink-0 ${theme === "dark"
+              ? "bg-gray-700 text-white hover:bg-gray-600"
+              : "bg-gray-300 text-gray-900 hover:bg-gray-400"
+              }`}
             onClick={addToWatchlist}
           >
-            Add
-            <span className="hidden min-[385px]:inline"> to Watchlist</span>
+            <span className="sm:hidden">Add</span>
+            <span className="hidden sm:inline">Add to Watchlist</span>
           </button>
         </div>
       </div>
 
       {/* Stock Header */}
       <div className="text-center mb-6">
-        <h1 className={`text-2xl font-bold ${
-          theme === "dark" ? "text-white" : "text-gray-900"
-        }`}>{data.longName}</h1>
-        <h2 className={`text-lg ${
-          theme === "dark" ? "text-gray-400" : "text-gray-500"
-        }`}>{data.symbol}</h2>
+        <h1 className={`text-2xl font-bold ${theme === "dark" ? "text-white" : "text-gray-900"
+          }`}>{data.longName}</h1>
+        <h2 className={`text-lg ${theme === "dark" ? "text-gray-400" : "text-gray-500"
+          }`}>{data.symbol}</h2>
       </div>
 
       {/* Stock Price */}
@@ -303,9 +297,8 @@ const StockData = ({
           ₹{data.regularMarketPrice}
         </span>
         <span
-          className={`ml-2 text-lg ${
-            priceChange > 0 ? "text-green-500" : "text-red-500"
-          }`}
+          className={`ml-2 text-lg ${priceChange > 0 ? "text-green-500" : "text-red-500"
+            }`}
         >
           {priceChange > 0 ? "▲" : "▼"} {Math.abs(priceChange).toFixed(2)} (
           {percentageChange}%)
@@ -315,8 +308,8 @@ const StockData = ({
       {/* Stock Chart - No time frame selector anymore */}
       {showChart && (
         <div className="mb-6">
-          <StockChart 
-            chartData={chartData} 
+          <StockChart
+            chartData={chartData}
             stockSymbol={symbol}
           />
         </div>
@@ -324,116 +317,89 @@ const StockData = ({
 
       {/* Stock Info Grid */}
       <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-        <div className={`p-3 rounded-lg text-center ${
-          theme === "dark" ? "bg-gray-700" : "bg-gray-100"
-        }`}>
-          <span className={`text-sm ${
-            theme === "dark" ? "text-gray-300" : "text-gray-600"
-          }`}>Market</span>
-          <p className={`font-bold ${
-            theme === "dark" ? "text-white" : "text-gray-900"
-          }`}>{data.exchangeName}</p>
+        <div className={`p-3 rounded-lg text-center ${theme === "dark" ? "bg-gray-700" : "bg-gray-100"
+          }`}>
+          <span className={`text-sm ${theme === "dark" ? "text-gray-300" : "text-gray-600"
+            }`}>Market</span>
+          <p className={`font-bold ${theme === "dark" ? "text-white" : "text-gray-900"
+            }`}>{data.exchangeName}</p>
         </div>
-        <div className={`p-3 rounded-lg text-center ${
-          theme === "dark" ? "bg-gray-700" : "bg-gray-100"
-        }`}>
-          <span className={`text-sm ${
-            theme === "dark" ? "text-gray-300" : "text-gray-600"
-          }`}>Currency</span>
-          <p className={`font-bold ${
-            theme === "dark" ? "text-white" : "text-gray-900"
-          }`}>{data.currency}</p>
+        <div className={`p-3 rounded-lg text-center ${theme === "dark" ? "bg-gray-700" : "bg-gray-100"
+          }`}>
+          <span className={`text-sm ${theme === "dark" ? "text-gray-300" : "text-gray-600"
+            }`}>Currency</span>
+          <p className={`font-bold ${theme === "dark" ? "text-white" : "text-gray-900"
+            }`}>{data.currency}</p>
         </div>
-        <div className={`p-3 rounded-lg text-center ${
-          theme === "dark" ? "bg-gray-700" : "bg-gray-100"
-        }`}>
-          <span className={`text-sm ${
-            theme === "dark" ? "text-gray-300" : "text-gray-600"
-          }`}>Volume</span>
-          <p className={`font-bold ${
-            theme === "dark" ? "text-white" : "text-gray-900"
-          }`}>{data.regularMarketVolume}</p>
+        <div className={`p-3 rounded-lg text-center ${theme === "dark" ? "bg-gray-700" : "bg-gray-100"
+          }`}>
+          <span className={`text-sm ${theme === "dark" ? "text-gray-300" : "text-gray-600"
+            }`}>Volume</span>
+          <p className={`font-bold ${theme === "dark" ? "text-white" : "text-gray-900"
+            }`}>{data.regularMarketVolume}</p>
         </div>
-        <div className={`p-3 rounded-lg text-center ${
-          theme === "dark" ? "bg-gray-700" : "bg-gray-100"
-        }`}>
-          <span className={`text-sm ${
-            theme === "dark" ? "text-gray-300" : "text-gray-600"
-          }`}>Day High</span>
-          <p className={`font-bold ${
-            theme === "dark" ? "text-white" : "text-gray-900"
-          }`}>₹{data.regularMarketDayHigh}</p>
+        <div className={`p-3 rounded-lg text-center ${theme === "dark" ? "bg-gray-700" : "bg-gray-100"
+          }`}>
+          <span className={`text-sm ${theme === "dark" ? "text-gray-300" : "text-gray-600"
+            }`}>Day High</span>
+          <p className={`font-bold ${theme === "dark" ? "text-white" : "text-gray-900"
+            }`}>₹{data.regularMarketDayHigh}</p>
         </div>
-        <div className={`p-3 rounded-lg text-center ${
-          theme === "dark" ? "bg-gray-700" : "bg-gray-100"
-        }`}>
-          <span className={`text-sm ${
-            theme === "dark" ? "text-gray-300" : "text-gray-600"
-          }`}>Day Low</span>
-          <p className={`font-bold ${
-            theme === "dark" ? "text-white" : "text-gray-900"
-          }`}>₹{data.regularMarketDayLow}</p>
+        <div className={`p-3 rounded-lg text-center ${theme === "dark" ? "bg-gray-700" : "bg-gray-100"
+          }`}>
+          <span className={`text-sm ${theme === "dark" ? "text-gray-300" : "text-gray-600"
+            }`}>Day Low</span>
+          <p className={`font-bold ${theme === "dark" ? "text-white" : "text-gray-900"
+            }`}>₹{data.regularMarketDayLow}</p>
         </div>
-        <div className={`p-3 rounded-lg text-center ${
-          theme === "dark" ? "bg-gray-700" : "bg-gray-100"
-        }`}>
-          <span className={`text-sm ${
-            theme === "dark" ? "text-gray-300" : "text-gray-600"
-          }`}>Previous Close</span>
-          <p className={`font-bold ${
-            theme === "dark" ? "text-white" : "text-gray-900"
-          }`}>₹{data.chartPreviousClose}</p>
+        <div className={`p-3 rounded-lg text-center ${theme === "dark" ? "bg-gray-700" : "bg-gray-100"
+          }`}>
+          <span className={`text-sm ${theme === "dark" ? "text-gray-300" : "text-gray-600"
+            }`}>Previous Close</span>
+          <p className={`font-bold ${theme === "dark" ? "text-white" : "text-gray-900"
+            }`}>₹{data.chartPreviousClose}</p>
         </div>
-        <div className={`p-3 rounded-lg text-center ${
-          theme === "dark" ? "bg-gray-700" : "bg-gray-100"
-        }`}>
-          <span className={`text-sm ${
-            theme === "dark" ? "text-gray-300" : "text-gray-600"
-          }`}>52W High</span>
-          <p className={`font-bold ${
-            theme === "dark" ? "text-white" : "text-gray-900"
-          }`}>₹{data.fiftyTwoWeekHigh}</p>
+        <div className={`p-3 rounded-lg text-center ${theme === "dark" ? "bg-gray-700" : "bg-gray-100"
+          }`}>
+          <span className={`text-sm ${theme === "dark" ? "text-gray-300" : "text-gray-600"
+            }`}>52W High</span>
+          <p className={`font-bold ${theme === "dark" ? "text-white" : "text-gray-900"
+            }`}>₹{data.fiftyTwoWeekHigh}</p>
         </div>
-        <div className={`p-3 rounded-lg text-center ${
-          theme === "dark" ? "bg-gray-700" : "bg-gray-100"
-        }`}>
-          <span className={`text-sm ${
-            theme === "dark" ? "text-gray-300" : "text-gray-600"
-          }`}>52W Low</span>
-          <p className={`font-bold ${
-            theme === "dark" ? "text-white" : "text-gray-900"
-          }`}>₹{data.fiftyTwoWeekLow}</p>
+        <div className={`p-3 rounded-lg text-center ${theme === "dark" ? "bg-gray-700" : "bg-gray-100"
+          }`}>
+          <span className={`text-sm ${theme === "dark" ? "text-gray-300" : "text-gray-600"
+            }`}>52W Low</span>
+          <p className={`font-bold ${theme === "dark" ? "text-white" : "text-gray-900"
+            }`}>₹{data.fiftyTwoWeekLow}</p>
         </div>
       </div>
 
       {/* Place Order Section */}
-      <h2 className={`text-xl font-semibold border-b pb-2 mb-4 ${
-        theme === "dark" 
-          ? "text-white border-gray-600" 
-          : "text-gray-900 border-gray-300"
-      }`}>
+      <h2 className={`text-xl font-semibold border-b pb-2 mb-4 ${theme === "dark"
+        ? "text-white border-gray-600"
+        : "text-gray-900 border-gray-300"
+        }`}>
         Place Order
       </h2>
       <div className="flex flex-col lg:flex-row gap-4 mb-4">
         <input
           type="number"
           placeholder="Enter price"
-          className={`w-full lg:w-1/3 p-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-            theme === "dark"
-              ? "bg-gray-700 text-white"
-              : "bg-gray-100 text-gray-900"
-          }`}
+          className={`w-full lg:w-1/3 p-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 ${theme === "dark"
+            ? "bg-gray-700 text-white"
+            : "bg-gray-100 text-gray-900"
+            }`}
           value={buyPrice}
           onChange={(e) => setBuyPrice(e.target.value)}
         />
         <input
           type="number"
           placeholder="Enter Qty"
-          className={`w-full lg:w-1/3 p-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-            theme === "dark"
-              ? "bg-gray-700 text-white"
-              : "bg-gray-100 text-gray-900"
-          }`}
+          className={`w-full lg:w-1/3 p-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 ${theme === "dark"
+            ? "bg-gray-700 text-white"
+            : "bg-gray-100 text-gray-900"
+            }`}
           value={quantity}
           onChange={(e) => calculateRequiredAmount(e)}
         />
@@ -452,9 +418,8 @@ const StockData = ({
       </div>
 
       {/* Margin and Required Amount */}
-      <div className={`text-right ${
-        theme === "dark" ? "text-white" : "text-gray-900"
-      }`}>
+      <div className={`text-right ${theme === "dark" ? "text-white" : "text-gray-900"
+        }`}>
         <span>Margin Avail: {user.balance.toFixed(2)}</span>
         <span className="ml-4">Req: {requiredAmount?.toFixed(2) || 0}</span>
       </div>
