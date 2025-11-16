@@ -9,6 +9,7 @@ import UpdatePassword from './pages/UpdatePassword';
 import ErrorPage from './pages/ErrorPage';
 import HistoryPage from './pages/HistoryPage';
 import { GoogleOAuthProvider } from "@react-oauth/google";
+import { ThemeProvider } from "./contexts/ThemeContext";
 // import './App.css'
 
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID; // Use environment variable
@@ -16,19 +17,21 @@ const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID; // Use environme
 function App() {
   return (
     <>
-      <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
-        <Routes>
-          <Route path="/" element={<Landing />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/signup" element={<Signup />} />
-          <Route path="/home" element={<HomePage />} />
-          <Route path="/history" element={<HistoryPage />} />
-          <Route path="/forgot-password" element={<ForgotPassword />} />
-          <Route path="/update-password/:id" element={<UpdatePassword />} />
+      <ThemeProvider>
+        <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
+          <Routes>
+            <Route path="/" element={<Landing />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/signup" element={<Signup />} />
+            <Route path="/home" element={<HomePage />} />
+            <Route path="/history" element={<HistoryPage />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/update-password/:id" element={<UpdatePassword />} />
 
-          <Route path="*" element={<ErrorPage />} />
-        </Routes>
-      </GoogleOAuthProvider>
+            <Route path="*" element={<ErrorPage />} />
+          </Routes>
+        </GoogleOAuthProvider>
+      </ThemeProvider>
     </>
   );
 }

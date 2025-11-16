@@ -5,6 +5,7 @@ import React, { useEffect, useState, useRef } from "react";
 import axios from "axios";
 import Positions from "../components/Positions";
 import Orders from "../components/Orders";
+import { useTheme } from "../contexts/ThemeContext";
 
 function HomePage() {
   const user = JSON.parse(sessionStorage.getItem("user"));
@@ -13,6 +14,7 @@ function HomePage() {
   const [executedPositions, setExecutedPositions] = useState([]);
   const [watchlists, setWatchlist] = useState({});
   const [activeView, setActiveView] = useState("stock");
+  const { theme } = useTheme();
 
   const hasFetchedWatchlist = useRef(false); // Prevent multiple API calls
 
@@ -71,14 +73,18 @@ function HomePage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-black pb-16 lg:pb-0">
+    <div className={`min-h-screen pb-16 lg:pb-0 ${theme === "dark" ? "bg-black" : "bg-gray-50"
+      }`}>
       <Navbar onSearch={handleStockSearch} />
 
       {/* Main Content */}
       <div className="w-full mx-auto p-4 flex flex-col lg:flex-row gap-6">
         {/* Desktop Left Section (Watchlist + Orders) */}
         <div className="hidden lg:flex lg:w-1/3 flex-col gap-6">
-          <div className="bg-gray-800 rounded-lg shadow-lg p-4 border border-gray-700">
+          <div className={`rounded-lg shadow-lg p-4 border ${theme === "dark"
+            ? "bg-gray-800 border-gray-700"
+            : "bg-white border-gray-200"
+            }`}>
             <Watchlist
               title="Watchlist"
               selectedStock={setSymbol}
@@ -86,7 +92,10 @@ function HomePage() {
               watchlists={watchlists}
             />
           </div>
-          <div className="bg-gray-800 rounded-lg shadow-lg p-4 border border-gray-700">
+          <div className={`rounded-lg shadow-lg p-4 border ${theme === "dark"
+            ? "bg-gray-800 border-gray-700"
+            : "bg-white border-gray-200"
+            }`}>
             <Orders
               title="Orders"
               selectedStock={setSymbol}
@@ -100,7 +109,10 @@ function HomePage() {
         <div className="lg:hidden w-full">
           {/* Watchlist Mobile View */}
           <div className={`${activeView === "watchlist" ? "block" : "hidden"}`}>
-            <div className="bg-gray-800 rounded-lg shadow-lg p-4 border border-gray-700 mb-4">
+            <div className={`rounded-lg shadow-lg p-4 border mb-4 ${theme === "dark"
+              ? "bg-gray-800 border-gray-700"
+              : "bg-white border-gray-200"
+              }`}>
               <Watchlist
                 title="Watchlist"
                 selectedStock={setSymbol}
@@ -112,7 +124,10 @@ function HomePage() {
 
           {/* Orders Mobile View */}
           <div className={`${activeView === "orders" ? "block" : "hidden"}`}>
-            <div className="bg-gray-800 rounded-lg shadow-lg p-4 border border-gray-700 mb-4">
+            <div className={`rounded-lg shadow-lg p-4 border mb-4 ${theme === "dark"
+              ? "bg-gray-800 border-gray-700"
+              : "bg-white border-gray-200"
+              }`}>
               <Orders
                 title="Orders"
                 selectedStock={setSymbol}
@@ -124,10 +139,13 @@ function HomePage() {
 
           {/* Stock Data Mobile View */}
           <div className={`${activeView === "stock" ? "block" : "hidden"}`}>
-            <div className="bg-gray-800 rounded-lg shadow-lg p-4 border border-gray-700 mb-4">
+            <div className={`rounded-lg shadow-lg p-4 border mb-4 ${theme === "dark"
+              ? "bg-gray-800 border-gray-700"
+              : "bg-white border-gray-200"
+              }`}>
               <StockData
                 newSymbol={symbol}
-                defaultSymbol="TATAMOTORS"
+                defaultSymbol="RELIANCE"
                 getWatchlist={getWatchlist}
                 getPositions={getPositions}
               />
@@ -136,7 +154,10 @@ function HomePage() {
 
           {/* Positions Mobile View */}
           <div className={`${activeView === "positions" ? "block" : "hidden"}`}>
-            <div className="bg-gray-800 rounded-lg shadow-lg p-4 border border-gray-700">
+            <div className={`rounded-lg shadow-lg p-4 border ${theme === "dark"
+              ? "bg-gray-800 border-gray-700"
+              : "bg-white border-gray-200"
+              }`}>
               <Positions
                 title="Positions"
                 selectedStock={setSymbol}
@@ -149,10 +170,13 @@ function HomePage() {
 
         {/* Desktop Middle Section */}
         <div className="hidden lg:block lg:w-1/2">
-          <div className="bg-gray-800 rounded-lg shadow-lg p-4 border border-gray-700 h-full">
+          <div className={`rounded-lg shadow-lg p-4 border h-full ${theme === "dark"
+            ? "bg-gray-800 border-gray-700"
+            : "bg-white border-gray-200"
+            }`}>
             <StockData
               newSymbol={symbol}
-              defaultSymbol="TATAMOTORS"
+              defaultSymbol="RELIANCE"
               getWatchlist={getWatchlist}
               getPositions={getPositions}
             />
@@ -161,7 +185,10 @@ function HomePage() {
 
         {/* Desktop Right Section */}
         <div className="hidden lg:block lg:w-2/7">
-          <div className="bg-gray-800 rounded-lg shadow-lg p-4 border border-gray-700">
+          <div className={`rounded-lg shadow-lg p-4 border ${theme === "dark"
+            ? "bg-gray-800 border-gray-700"
+            : "bg-white border-gray-200"
+            }`}>
             <Positions
               title="Positions"
               selectedStock={setSymbol}
@@ -173,15 +200,21 @@ function HomePage() {
       </div>
 
       {/* Mobile Bottom Navigation */}
-      <div className="fixed bottom-0 left-0 right-0 lg:hidden bg-gray-900 border-t border-gray-700">
+      <div className={`fixed bottom-0 left-0 right-0 lg:hidden border-t ${theme === "dark"
+        ? "bg-gray-900 border-gray-700"
+        : "bg-white border-gray-200"
+        }`}>
         <div className="grid grid-cols-4 gap-1 p-2">
           <button
             onClick={() => setActiveView("watchlist")}
-            className={`flex flex-col items-center p-2 rounded-lg ${
-              activeView === "watchlist"
+            className={`flex flex-col items-center p-2 rounded-lg ${activeView === "watchlist"
+              ? theme === "dark"
                 ? "bg-gray-700 text-amber-400"
-                : "text-gray-400"
-            }`}
+                : "bg-gray-200 text-amber-600"
+              : theme === "dark"
+                ? "text-gray-400"
+                : "text-gray-600"
+              }`}
           >
             <svg
               className="w-6 h-6"
@@ -201,11 +234,14 @@ function HomePage() {
 
           <button
             onClick={() => setActiveView("orders")}
-            className={`flex flex-col items-center p-2 rounded-lg ${
-              activeView === "orders"
+            className={`flex flex-col items-center p-2 rounded-lg ${activeView === "orders"
+              ? theme === "dark"
                 ? "bg-gray-700 text-amber-400"
-                : "text-gray-400"
-            }`}
+                : "bg-gray-200 text-amber-600"
+              : theme === "dark"
+                ? "text-gray-400"
+                : "text-gray-600"
+              }`}
           >
             <svg
               className="w-6 h-6"
@@ -225,11 +261,14 @@ function HomePage() {
 
           <button
             onClick={() => setActiveView("stock")}
-            className={`flex flex-col items-center p-2 rounded-lg ${
-              activeView === "stock"
+            className={`flex flex-col items-center p-2 rounded-lg ${activeView === "stock"
+              ? theme === "dark"
                 ? "bg-gray-700 text-amber-400"
-                : "text-gray-400"
-            }`}
+                : "bg-gray-200 text-amber-600"
+              : theme === "dark"
+                ? "text-gray-400"
+                : "text-gray-600"
+              }`}
           >
             <svg
               className="w-6 h-6"
@@ -249,11 +288,14 @@ function HomePage() {
 
           <button
             onClick={() => setActiveView("positions")}
-            className={`flex flex-col items-center p-2 rounded-lg ${
-              activeView === "positions"
+            className={`flex flex-col items-center p-2 rounded-lg ${activeView === "positions"
+              ? theme === "dark"
                 ? "bg-gray-700 text-amber-400"
-                : "text-gray-400"
-            }`}
+                : "bg-gray-200 text-amber-600"
+              : theme === "dark"
+                ? "text-gray-400"
+                : "text-gray-600"
+              }`}
           >
             <svg
               className="w-6 h-6"

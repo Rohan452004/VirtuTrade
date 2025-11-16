@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import toast from "react-hot-toast";
+import { useTheme } from "../contexts/ThemeContext";
 
 const SellOrderModal = ({
   isOpen,
@@ -13,6 +14,7 @@ const SellOrderModal = ({
   const [price, setPrice] = useState("");
   const [quantity, setQuantity] = useState("");
   const [isMarketOrder, setIsMarketOrder] = useState(true);
+  const { theme } = useTheme();
 
   useEffect(() => {
     if (isMarketOrder && currentPrice) {
@@ -43,21 +45,27 @@ const SellOrderModal = ({
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-gray-800 rounded-lg p-6 w-full max-w-md">
-        <h3 className="text-lg font-semibold text-white mb-4">
+      <div className={`rounded-lg p-6 w-full max-w-md ${theme === "dark" ? "bg-gray-800" : "bg-white"
+        }`}>
+        <h3 className={`text-lg font-semibold mb-4 ${theme === "dark" ? "text-white" : "text-gray-900"
+          }`}>
           Sell {stockSymbol.toUpperCase()}
         </h3>
 
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
-            <label className="block text-sm text-gray-300 mb-2">
+            <label className={`block text-sm mb-2 ${theme === "dark" ? "text-gray-300" : "text-gray-700"
+              }`}>
               Quantity (Max: {maxQuantity})
             </label>
             <input
               type="number"
               value={quantity}
               onChange={(e) => setQuantity(e.target.value)}
-              className="w-full p-2 bg-gray-700 text-white rounded focus:ring-2 focus:ring-green-500"
+              className={`w-full p-2 rounded focus:ring-2 focus:ring-green-500 ${theme === "dark"
+                  ? "bg-gray-700 text-white"
+                  : "bg-gray-100 text-gray-900"
+                }`}
               min="1"
               max={maxQuantity}
               required
@@ -72,14 +80,15 @@ const SellOrderModal = ({
               onChange={(e) => setIsMarketOrder(e.target.checked)}
               className="form-checkbox h-4 w-4 text-green-500"
             />
-            <label htmlFor="marketOrder" className="text-white">
+            <label htmlFor="marketOrder" className={theme === "dark" ? "text-white" : "text-gray-900"}>
               Market Order
             </label>
           </div>
 
           {!isMarketOrder && (
             <div className="mb-4">
-              <label className="block text-sm text-gray-300 mb-2">
+              <label className={`block text-sm mb-2 ${theme === "dark" ? "text-gray-300" : "text-gray-700"
+                }`}>
                 Limit Price
               </label>
               <input
@@ -87,7 +96,10 @@ const SellOrderModal = ({
                 step="0.01"
                 value={price}
                 onChange={(e) => setPrice(e.target.value)}
-                className="w-full p-2 bg-gray-700 text-white rounded focus:ring-2 focus:ring-green-500"
+                className={`w-full p-2 rounded focus:ring-2 focus:ring-green-500 ${theme === "dark"
+                    ? "bg-gray-700 text-white"
+                    : "bg-gray-100 text-gray-900"
+                  }`}
                 required
                 min="0.01"
               />
@@ -95,7 +107,8 @@ const SellOrderModal = ({
           )}
 
           {isMarketOrder && (
-            <div className="mb-4 text-sm text-gray-300">
+            <div className={`mb-4 text-sm ${theme === "dark" ? "text-gray-300" : "text-gray-700"
+              }`}>
               Estimated Price: ₹{currentPrice?.toFixed(2)}
             </div>
           )}
@@ -104,7 +117,10 @@ const SellOrderModal = ({
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-gray-300 hover:text-white"
+              className={`px-4 py-2 ${theme === "dark"
+                  ? "text-gray-300 hover:text-white"
+                  : "text-gray-700 hover:text-gray-900"
+                }`}
             >
               Cancel
             </button>
@@ -131,6 +147,7 @@ const Positions = ({
   const [selectedPosition, setSelectedPosition] = useState(null);
   const [currentPrices, setCurrentPrices] = useState({});
   const user = JSON.parse(sessionStorage.getItem("user"));
+  const { theme } = useTheme();
 
   const fetchStockPrice = async (symbol) => {
     try {
@@ -258,15 +275,19 @@ const Positions = ({
   };
 
   return (
-    <div className="border border-gray-600 rounded-lg bg-gray-800 shadow-lg w-full lg:w-96 h-[60vh] sm:h-[96vh] overflow-hidden">
+    <div className={`border rounded-lg shadow-lg w-full lg:w-96 h-[60vh] sm:h-[96vh] overflow-hidden ${theme === "dark"
+        ? "border-gray-600 bg-gray-800"
+        : "border-gray-200 bg-white"
+      }`}>
       {/* Total P&L Section */}
-      <div className="pt-4 px-4 border-b border-gray-700">
+      <div className={`pt-4 px-4 border-b ${theme === "dark" ? "border-gray-700" : "border-gray-200"
+        }`}>
         <div className="text-center mb-3">
-          <div className="text-xs text-gray-400 mb-1">Total Profit & Loss</div>
+          <div className={`text-xs mb-1 ${theme === "dark" ? "text-gray-400" : "text-gray-500"
+            }`}>Total Profit & Loss</div>
           <div
-            className={`text-2xl font-bold ${
-              calculateTotalPnL() >= 0 ? "text-green-500" : "text-red-500"
-            }`}
+            className={`text-2xl font-bold ${calculateTotalPnL() >= 0 ? "text-green-500" : "text-red-500"
+              }`}
           >
             {calculateTotalPnL().toFixed(2)}
           </div>
@@ -274,10 +295,13 @@ const Positions = ({
       </div>
 
       {/* Header */}
-      <div className="p-4 border-b border-gray-700">
+      <div className={`p-4 border-b ${theme === "dark" ? "border-gray-700" : "border-gray-200"
+        }`}>
         <div className="flex justify-between items-center">
-          <h2 className="text-lg font-semibold text-white">{title}</h2>
-          <div className="text-xs text-gray-400">
+          <h2 className={`text-lg font-semibold ${theme === "dark" ? "text-white" : "text-gray-900"
+            }`}>{title}</h2>
+          <div className={`text-xs ${theme === "dark" ? "text-gray-400" : "text-gray-500"
+            }`}>
             * Live P&L based on current prices
           </div>
         </div>
@@ -294,26 +318,30 @@ const Positions = ({
             return (
               <div
                 key={index}
-                className="flex items-center justify-between p-3 mb-2 rounded-lg bg-gray-900 hover:bg-green-900 transition-colors cursor-pointer"
+                className={`flex items-center justify-between p-3 mb-2 rounded-lg transition-colors cursor-pointer ${theme === "dark"
+                    ? "bg-gray-900 hover:bg-green-900"
+                    : "bg-gray-50 hover:bg-green-50"
+                  }`}
                 onClick={() => selectedStock(position.stockSymbol)}
               >
                 {/* Stock Info */}
                 <div className="flex flex-col flex-1">
                   <div className="flex justify-between items-start mb-1">
-                    <span className="text-white font-medium">
+                    <span className={`font-medium ${theme === "dark" ? "text-white" : "text-gray-900"
+                      }`}>
                       {position.stockSymbol.toUpperCase()}
                     </span>
                     {pnl !== null && (
                       <span
-                        className={`text-xs font-medium ${
-                          isPositive ? "text-green-500" : "text-red-500"
-                        }`}
+                        className={`text-xs font-medium ${isPositive ? "text-green-500" : "text-red-500"
+                          }`}
                       >
                         ₹{pnl.toFixed(2)}
                       </span>
                     )}
                   </div>
-                  <div className="flex justify-between text-xs text-gray-300">
+                  <div className={`flex justify-between text-xs ${theme === "dark" ? "text-gray-300" : "text-gray-600"
+                    }`}>
                     <span>Avg: ₹{position.buyPrice.toFixed(2)}</span>
                     <span>Qty: {position.remainingQuantity}</span>
                   </div>

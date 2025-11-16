@@ -11,6 +11,7 @@ import {
   Legend,
 } from "chart.js";
 import axios from "axios";
+import { useTheme } from "../contexts/ThemeContext";
 
 // Register Chart.js components
 ChartJS.register(
@@ -36,11 +37,16 @@ const fetchWithRetry = async (symbol, retries = 3, delay = 1000) => {
 };
 
 const StockChart = ({ chartData, stockSymbol }) => {
+  const { theme } = useTheme();
+
   // Process data for Chart.js
   if (!chartData || chartData.length === 0) {
     return (
-      <div className="bg-gray-900 p-4 rounded-lg w-full h-[400px] flex items-center justify-center">
-        <span className="text-gray-400">No chart data available</span>
+      <div className={`p-4 rounded-lg w-full h-[400px] flex items-center justify-center ${theme === "dark" ? "bg-gray-900" : "bg-gray-100"
+        }`}>
+        <span className={theme === "dark" ? "text-gray-400" : "text-gray-500"}>
+          No chart data available
+        </span>
       </div>
     );
   }
@@ -51,8 +57,8 @@ const StockChart = ({ chartData, stockSymbol }) => {
   // Format time labels to show time in 24-hour format
   const formatTimeLabel = (timestamp) => {
     const date = new Date(timestamp * 1000);
-    return date.toLocaleTimeString([], { 
-      hour: '2-digit', 
+    return date.toLocaleTimeString([], {
+      hour: '2-digit',
       minute: '2-digit',
       hour12: false // Use 24-hour format
     });
@@ -81,6 +87,13 @@ const StockChart = ({ chartData, stockSymbol }) => {
     datasets: [mainDataset],
   };
 
+  // Theme-based colors
+  const textColor = theme === "dark" ? "white" : "#1f2937";
+  const textColorSecondary = theme === "dark" ? "rgba(255, 255, 255, 0.7)" : "rgba(0, 0, 0, 0.6)";
+  const gridColor = theme === "dark" ? "rgba(255, 255, 255, 0.1)" : "rgba(0, 0, 0, 0.1)";
+  const tooltipBg = theme === "dark" ? "rgba(30, 41, 59, 0.9)" : "rgba(255, 255, 255, 0.95)";
+  const tooltipTextColor = theme === "dark" ? "white" : "#1f2937";
+
   // Chart options
   const options = {
     responsive: true,
@@ -92,7 +105,7 @@ const StockChart = ({ chartData, stockSymbol }) => {
       legend: {
         position: "top",
         labels: {
-          color: "white",
+          color: textColor,
           font: {
             size: 12,
           },
@@ -101,7 +114,7 @@ const StockChart = ({ chartData, stockSymbol }) => {
       title: {
         display: true,
         text: `${stockSymbol} - 1 min Chart`,
-        color: "white",
+        color: textColor,
         font: {
           size: 16,
           weight: 'bold',
@@ -114,7 +127,9 @@ const StockChart = ({ chartData, stockSymbol }) => {
       tooltip: {
         mode: "index",
         intersect: false,
-        backgroundColor: "rgba(30, 41, 59, 0.9)",
+        backgroundColor: tooltipBg,
+        titleColor: tooltipTextColor,
+        bodyColor: tooltipTextColor,
         titleFont: {
           size: 12,
         },
@@ -124,7 +139,7 @@ const StockChart = ({ chartData, stockSymbol }) => {
         padding: 10,
         displayColors: false,
         callbacks: {
-          label: function(context) {
+          label: function (context) {
             return `Price: ₹${context.raw.toFixed(2)}`;
           }
         }
@@ -135,33 +150,33 @@ const StockChart = ({ chartData, stockSymbol }) => {
         title: {
           display: true,
           text: 'Time (9:15 - 15:30)',
-          color: 'rgba(255, 255, 255, 0.7)',
-          padding: {top: 10, bottom: 0}
+          color: textColorSecondary,
+          padding: { top: 10, bottom: 0 }
         },
         ticks: {
-          color: "rgba(255, 255, 255, 0.7)",
+          color: textColorSecondary,
           maxTicksLimit: 8, // Show 8 time points
           font: {
             size: 10,
           },
         },
         grid: {
-          color: "rgba(255, 255, 255, 0.1)",
+          color: gridColor,
           drawBorder: false,
         },
       },
       y: {
         ticks: {
-          color: "rgba(255, 255, 255, 0.7)",
+          color: textColorSecondary,
           font: {
             size: 10,
           },
-          callback: function(value) {
+          callback: function (value) {
             return '₹' + value.toFixed(2);
           },
         },
         grid: {
-          color: "rgba(255, 255, 255, 0.1)",
+          color: gridColor,
           drawBorder: false,
         },
       },
@@ -182,7 +197,8 @@ const StockChart = ({ chartData, stockSymbol }) => {
   };
 
   return (
-    <div className="bg-gray-900 p-4 rounded-lg w-full h-[400px]">
+    <div className={`p-4 rounded-lg w-full h-[400px] ${theme === "dark" ? "bg-gray-900" : "bg-gray-100"
+      }`}>
       <Line data={data} options={options} />
     </div>
   );

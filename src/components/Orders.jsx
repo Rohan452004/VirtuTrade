@@ -4,6 +4,7 @@ import io from "socket.io-client";
 import { FaEdit, FaTimes } from "react-icons/fa";
 import ModifyAmount from "./ModifyAmount";
 import toast from "react-hot-toast";
+import { useTheme } from "../contexts/ThemeContext";
 
 const socket = io(import.meta.env.VITE_APP_WEB_URL); // server URL
 
@@ -16,6 +17,7 @@ const Orders = ({ title, selectedStock, getPositions, positions }) => {
   const [qty, setQty] = useState();
   const [stockName, setStockName] = useState();
   const [type, setType] = useState();
+  const { theme } = useTheme();
 
   useEffect(() => {
     // Listen for 'orderUpdated' event from server side
@@ -53,8 +55,7 @@ const Orders = ({ title, selectedStock, getPositions, positions }) => {
 
     try {
       const res = await axios.patch(
-        `${
-          import.meta.env.VITE_APP_WEB_URL
+        `${import.meta.env.VITE_APP_WEB_URL
         }/api/position/modify/${selectedPositionId}`,
         {
           modifiedPrice: newPrice,
@@ -144,11 +145,19 @@ const Orders = ({ title, selectedStock, getPositions, positions }) => {
   }, []);
 
   return (
-    <div className="border border-gray-600 rounded-lg bg-gray-800 shadow-lg w-full lg:w-96 h-[60vh] sm:h-[48.5vh] overflow-hidden">
+    <div className={`border rounded-lg shadow-lg w-full lg:w-96 h-[60vh] sm:h-[48.5vh] overflow-hidden ${theme === "dark"
+        ? "border-gray-600 bg-gray-800"
+        : "border-gray-200 bg-white"
+      }`}>
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-gray-700">
-        <h2 className="text-lg font-semibold text-white">{title}</h2>
-        <span className="text-xs text-gray-400">{positions.length} orders</span>
+      <div className={`flex items-center justify-between p-4 border-b ${theme === "dark"
+          ? "border-gray-700"
+          : "border-gray-200"
+        }`}>
+        <h2 className={`text-lg font-semibold ${theme === "dark" ? "text-white" : "text-gray-900"
+          }`}>{title}</h2>
+        <span className={`text-xs ${theme === "dark" ? "text-gray-400" : "text-gray-500"
+          }`}>{positions.length} orders</span>
       </div>
 
       {/* Orders List */}
@@ -157,20 +166,23 @@ const Orders = ({ title, selectedStock, getPositions, positions }) => {
           positions.map((position, index) => (
             <div
               key={index}
-              className={`group flex items-center justify-between p-3 mb-2 rounded-lg transition-all ${
-                position.status === "executed"
+              className={`group flex items-center justify-between p-3 mb-2 rounded-lg transition-all ${position.status === "executed"
                   ? "bg-green-900/30"
-                  : "bg-gray-700 hover:bg-gray-600"
-              }`}
+                  : theme === "dark"
+                    ? "bg-gray-700 hover:bg-gray-600"
+                    : "bg-gray-100 hover:bg-gray-200"
+                }`}
             >
               {/* Left Section */}
               <div className="flex items-center gap-3 flex-1">
                 {/* Stock Symbol */}
                 <div className="flex flex-col min-w-[70px]">
-                  <span className="text-white font-medium text-sm">
+                  <span className={`font-medium text-sm ${theme === "dark" ? "text-white" : "text-gray-900"
+                    }`}>
                     {position.stockSymbol.toUpperCase()}
                   </span>
-                  <span className="text-xs text-gray-400">
+                  <span className={`text-xs ${theme === "dark" ? "text-gray-400" : "text-gray-500"
+                    }`}>
                     {position.type === "buy" ? "Buy" : "Sell"}
                   </span>
                 </div>
@@ -178,23 +190,24 @@ const Orders = ({ title, selectedStock, getPositions, positions }) => {
                 {/* Order Details */}
                 <div className="flex items-center gap-2">
                   <span
-                    className={`px-2 py-1 text-xs font-semibold rounded ${
-                      position.type === "buy"
+                    className={`px-2 py-1 text-xs font-semibold rounded ${position.type === "buy"
                         ? "bg-blue-500/20 text-blue-400"
                         : "bg-red-500/20 text-red-400"
-                    }`}
+                      }`}
                   >
                     {position.type.toUpperCase()}
                   </span>
 
                   <div className="flex flex-col">
-                    <span className="text-xs text-gray-300">
+                    <span className={`text-xs ${theme === "dark" ? "text-gray-300" : "text-gray-700"
+                      }`}>
                       Price:{" "}
                       {position.type === "buy"
                         ? position?.buyPrice.toFixed(1)
                         : position?.sellPrice.toFixed(1)}
                     </span>
-                    <span className="text-xs text-gray-300">
+                    <span className={`text-xs ${theme === "dark" ? "text-gray-300" : "text-gray-700"
+                      }`}>
                       Qty: {position.quantity}
                     </span>
                   </div>
@@ -205,70 +218,74 @@ const Orders = ({ title, selectedStock, getPositions, positions }) => {
               <div className="flex items-center gap-3">
                 {/* Status */}
                 <span
-                  className={`px-2 py-1 text-xs font-semibold rounded ${
-                    position.status === "closed"
+                  className={`px-2 py-1 text-xs font-semibold rounded ${position.status === "closed"
                       ? "bg-gray-500/20 text-gray-400"
                       : position.status === "executed" ||
                         position?.sellStatus === "executed"
-                      ? "bg-green-500/20 text-green-400"
-                      : "bg-gray-500/20 text-gray-400"
-                  }`}
+                        ? "bg-green-500/20 text-green-400"
+                        : "bg-gray-500/20 text-gray-400"
+                    }`}
                 >
                   {position.status === "closed"
                     ? "CLOSED"
                     : position.status === "executed" ||
                       position?.sellStatus === "executed"
-                    ? "EXECUTED"
-                    : "PENDING"}
+                      ? "EXECUTED"
+                      : "PENDING"}
                 </span>
 
                 {/* Actions */}
                 <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                   {(position?.status === "pending" ||
                     position?.sellStatus === "pending") && (
-                    <>
-                      <button
-                        className="p-1.5 rounded-lg bg-gray-500/20 hover:bg-gray-500/30 text-gray-400 hover:text-white transition-colors"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setDialogOpen(true);
-                          setSelectedPositionId(position._id);
-                          setPrice(
-                            position.type === "buy"
-                              ? position?.buyPrice
-                              : position?.sellPrice
-                          );
-                          setQty(position.quantity);
-                          setStockName(position.stockSymbol);
-                          setType(position.type);
-                        }}
-                      >
-                        <FaEdit className="text-lg" />
-                      </button>
+                      <>
+                        <button
+                          className={`p-1.5 rounded-lg transition-colors ${theme === "dark"
+                              ? "bg-gray-500/20 hover:bg-gray-500/30 text-gray-400 hover:text-white"
+                              : "bg-gray-300 hover:bg-gray-400 text-gray-700 hover:text-gray-900"
+                            }`}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setDialogOpen(true);
+                            setSelectedPositionId(position._id);
+                            setPrice(
+                              position.type === "buy"
+                                ? position?.buyPrice
+                                : position?.sellPrice
+                            );
+                            setQty(position.quantity);
+                            setStockName(position.stockSymbol);
+                            setType(position.type);
+                          }}
+                        >
+                          <FaEdit className="text-lg" />
+                        </button>
 
-                      <button
-                        className="p-1.5 rounded-lg bg-red-500/20 hover:bg-red-500/30 text-red-400 hover:text-white transition-colors"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          cancelOrder(
-                            position._id,
-                            position.buyPrice,
-                            position.quantity
-                          );
-                        }}
-                      >
-                        <FaTimes className="text-lg" />
-                      </button>
-                    </>
-                  )}
+                        <button
+                          className="p-1.5 rounded-lg bg-red-500/20 hover:bg-red-500/30 text-red-400 hover:text-white transition-colors"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            cancelOrder(
+                              position._id,
+                              position.buyPrice,
+                              position.quantity
+                            );
+                          }}
+                        >
+                          <FaTimes className="text-lg" />
+                        </button>
+                      </>
+                    )}
                 </div>
               </div>
             </div>
           ))
         ) : (
           <div className="flex flex-col items-center justify-center h-full">
-            <p className="text-gray-400 mb-2">No active orders</p>
-            <span className="text-xs text-gray-600">
+            <p className={`mb-2 ${theme === "dark" ? "text-gray-400" : "text-gray-500"
+              }`}>No active orders</p>
+            <span className={`text-xs ${theme === "dark" ? "text-gray-600" : "text-gray-500"
+              }`}>
               Place orders from the trading panel
             </span>
           </div>

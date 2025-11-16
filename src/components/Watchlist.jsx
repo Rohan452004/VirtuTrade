@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import toast from "react-hot-toast";
+import { useTheme } from "../contexts/ThemeContext";
 
 const Watchlist = ({ title, selectedStock, getWatchlist, watchlists }) => {
   const [stockData, setStockData] = useState({});
+  const { theme } = useTheme();
 
   const removeFromWatchlist = async (stockSymbol) => {
     try {
@@ -67,8 +69,16 @@ const Watchlist = ({ title, selectedStock, getWatchlist, watchlists }) => {
   }, [watchlists?.stocks]);
 
   return (
-    <div className="border border-gray-600 rounded-lg bg-gray-800 shadow-lg w-full lg:w-96 h-[60vh] sm:h-[40vh] overflow-hidden">
-      <h2 className="text-lg font-semibold text-white p-4 border-b border-gray-700">
+    <div className={`border rounded-lg shadow-lg w-full lg:w-96 h-[60vh] sm:h-[40vh] overflow-hidden ${
+      theme === "dark" 
+        ? "border-gray-600 bg-gray-800" 
+        : "border-gray-200 bg-white"
+    }`}>
+      <h2 className={`text-lg font-semibold p-4 border-b ${
+        theme === "dark" 
+          ? "text-white border-gray-700" 
+          : "text-gray-900 border-gray-200"
+      }`}>
         {title}
       </h2>
 
@@ -80,11 +90,17 @@ const Watchlist = ({ title, selectedStock, getWatchlist, watchlists }) => {
             return (
               <div
                 key={index}
-                className="flex justify-between items-center p-3 mb-2 rounded-lg cursor-pointer transition-colors bg-gray-700 hover:bg-gray-600"
+                className={`flex justify-between items-center p-3 mb-2 rounded-lg cursor-pointer transition-colors ${
+                  theme === "dark"
+                    ? "bg-gray-700 hover:bg-gray-600"
+                    : "bg-gray-100 hover:bg-gray-200"
+                }`}
                 onClick={() => selectedStock(stockSymbol)}
               >
                 <div className="flex flex-col max-w-[60%]">
-                  <span className="text-white text-sm font-medium truncate">
+                  <span className={`text-sm font-medium truncate ${
+                    theme === "dark" ? "text-white" : "text-gray-900"
+                  }`}>
                     {stockSymbol.toUpperCase()}
                   </span>
                   {data && (
@@ -99,7 +115,11 @@ const Watchlist = ({ title, selectedStock, getWatchlist, watchlists }) => {
                 </div>
 
                 <button
-                  className="bg-gray-600 text-white px-2 sm:px-3 py-1 rounded-lg hover:bg-gray-500 transition-colors text-xs sm:text-sm"
+                  className={`px-2 sm:px-3 py-1 rounded-lg transition-colors text-xs sm:text-sm ${
+                    theme === "dark"
+                      ? "bg-gray-600 text-white hover:bg-gray-500"
+                      : "bg-gray-300 text-gray-900 hover:bg-gray-400"
+                  }`}
                   onClick={(e) => {
                     e.stopPropagation();
                     removeFromWatchlist(stockSymbol);
@@ -111,7 +131,9 @@ const Watchlist = ({ title, selectedStock, getWatchlist, watchlists }) => {
             );
           })
         ) : (
-          <p className="text-gray-400 text-center text-sm p-4">
+          <p className={`text-center text-sm p-4 ${
+            theme === "dark" ? "text-gray-400" : "text-gray-500"
+          }`}>
             {watchlists?.stocks ? "No stocks in watchlist" : "Loading..."}
           </p>
         )}
