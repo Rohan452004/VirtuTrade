@@ -63,8 +63,8 @@ const SellOrderModal = ({
               value={quantity}
               onChange={(e) => setQuantity(e.target.value)}
               className={`w-full p-2 rounded focus:ring-2 focus:ring-green-500 ${theme === "dark"
-                  ? "bg-gray-700 text-white"
-                  : "bg-gray-100 text-gray-900"
+                ? "bg-gray-700 text-white"
+                : "bg-gray-100 text-gray-900"
                 }`}
               min="1"
               max={maxQuantity}
@@ -97,8 +97,8 @@ const SellOrderModal = ({
                 value={price}
                 onChange={(e) => setPrice(e.target.value)}
                 className={`w-full p-2 rounded focus:ring-2 focus:ring-green-500 ${theme === "dark"
-                    ? "bg-gray-700 text-white"
-                    : "bg-gray-100 text-gray-900"
+                  ? "bg-gray-700 text-white"
+                  : "bg-gray-100 text-gray-900"
                   }`}
                 required
                 min="0.01"
@@ -118,8 +118,8 @@ const SellOrderModal = ({
               type="button"
               onClick={onClose}
               className={`px-4 py-2 ${theme === "dark"
-                  ? "text-gray-300 hover:text-white"
-                  : "text-gray-700 hover:text-gray-900"
+                ? "text-gray-300 hover:text-white"
+                : "text-gray-700 hover:text-gray-900"
                 }`}
             >
               Cancel
@@ -276,8 +276,8 @@ const Positions = ({
 
   return (
     <div className={`border rounded-lg shadow-lg w-full lg:w-96 h-[60vh] sm:h-[96vh] overflow-hidden ${theme === "dark"
-        ? "border-gray-600 bg-gray-800"
-        : "border-gray-200 bg-white"
+      ? "border-gray-600 bg-gray-800"
+      : "border-gray-200 bg-white"
       }`}>
       {/* Total P&L Section */}
       <div className={`pt-4 px-4 border-b ${theme === "dark" ? "border-gray-700" : "border-gray-200"
@@ -318,38 +318,38 @@ const Positions = ({
             return (
               <div
                 key={index}
-                className={`flex items-center justify-between p-3 mb-2 rounded-lg transition-colors cursor-pointer ${theme === "dark"
-                    ? "bg-gray-900 hover:bg-green-900"
-                    : "bg-gray-50 hover:bg-green-50"
+                className={`flex items-center gap-3 p-3 mb-2 rounded-lg transition-colors cursor-pointer ${theme === "dark"
+                  ? "bg-gray-900 hover:bg-green-900"
+                  : "bg-gray-50 hover:bg-green-50"
                   }`}
                 onClick={() => selectedStock(position.stockSymbol)}
               >
                 {/* Stock Info */}
-                <div className="flex flex-col flex-1">
-                  <div className="flex justify-between items-start mb-1">
-                    <span className={`font-medium ${theme === "dark" ? "text-white" : "text-gray-900"
-                      }`}>
+                <div className="flex flex-col flex-1 min-w-0">
+                  <div className="flex justify-between items-start mb-1 gap-2">
+                    <span className={`font-medium truncate min-w-0 ${theme === "dark" ? "text-white" : "text-gray-900"
+                      }`} title={position.stockSymbol.toUpperCase()}>
                       {position.stockSymbol.toUpperCase()}
                     </span>
                     {pnl !== null && (
                       <span
-                        className={`text-xs font-medium ${isPositive ? "text-green-500" : "text-red-500"
+                        className={`text-xs font-medium flex-shrink-0 whitespace-nowrap ${isPositive ? "text-green-500" : "text-red-500"
                           }`}
                       >
                         ₹{pnl.toFixed(2)}
                       </span>
                     )}
                   </div>
-                  <div className={`flex justify-between text-xs ${theme === "dark" ? "text-gray-300" : "text-gray-600"
+                  <div className={`flex justify-between text-xs gap-2 ${theme === "dark" ? "text-gray-300" : "text-gray-600"
                     }`}>
-                    <span>Avg: ₹{position.buyPrice.toFixed(2)}</span>
-                    <span>Qty: {position.remainingQuantity}</span>
+                    <span className="truncate">Avg: ₹{position.buyPrice.toFixed(2)}</span>
+                    <span className="flex-shrink-0 whitespace-nowrap">Qty: {position.remainingQuantity}</span>
                   </div>
                 </div>
 
                 {/* Sell Button */}
                 <button
-                  className="ml-4 bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700 transition-colors"
+                  className="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700 transition-colors flex-shrink-0 whitespace-nowrap"
                   onClick={(e) => {
                     e.stopPropagation();
                     handleSellClick(position);

@@ -124,6 +124,16 @@ const Navbar = ({ onSearch }) => {
               </span>
             </div>
 
+            {/* Time Display - Mobile */}
+            <div className={`md:hidden flex items-center gap-2 px-3 py-1.5 rounded-lg ${theme === "dark" ? "bg-gray-800" : "bg-gray-100"
+              }`}>
+              <Clock size={18} className={theme === "dark" ? "text-gray-400" : "text-gray-500"} />
+              <span className={`text-sm font-medium ${theme === "dark" ? "text-gray-300" : "text-gray-700"
+                }`}>
+                {time.toLocaleTimeString()}
+              </span>
+            </div>
+
             {/* Mobile Menu Button */}
             <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
@@ -146,7 +156,7 @@ const Navbar = ({ onSearch }) => {
                 <User size={22} className={theme === "dark" ? "text-gray-300" : "text-gray-700"} />
               </button>
 
-              {/* Profile Dropdown */}
+              {/* Profile Dropdown - Shows on both Desktop and Mobile */}
               {isProfileOpen && (
                 <div className={`absolute right-0 mt-2 w-72 rounded-xl shadow-2xl border z-50 ${theme === "dark"
                   ? "bg-gray-800 border-gray-700"
@@ -257,10 +267,9 @@ const Navbar = ({ onSearch }) => {
           </div>
         </div>
 
-        {/* Mobile Search and Menu */}
+        {/* Mobile Search */}
         {isMenuOpen && (
-          <div className="md:hidden mt-4 space-y-3">
-            {/* Mobile Search */}
+          <div className="md:hidden mt-4">
             <div className="flex gap-2">
               <input
                 type="text"
@@ -279,118 +288,6 @@ const Navbar = ({ onSearch }) => {
                 Go
               </button>
             </div>
-
-            {/* Mobile Profile Dropdown */}
-            {isProfileOpen && (
-              <div className={`rounded-xl shadow-xl border ${theme === "dark"
-                ? "bg-gray-800 border-gray-700"
-                : "bg-white border-gray-200"
-                }`}>
-                {/* User Info Section */}
-                <div className={`p-4 border-b ${theme === "dark" ? "border-gray-700" : "border-gray-200"
-                  }`}>
-                  <div className="flex items-center gap-3 mb-3">
-                    <div className={`w-12 h-12 rounded-full flex items-center justify-center ${theme === "dark" ? "bg-gray-700" : "bg-gray-200"
-                      }`}>
-                      <User size={24} className={theme === "dark" ? "text-white" : "text-gray-900"} />
-                    </div>
-                    <div className="flex-1">
-                      <p className={`font-semibold text-base ${theme === "dark" ? "text-white" : "text-gray-900"
-                        }`}>
-                        {user.username}
-                      </p>
-                      <p className={`text-sm ${theme === "dark" ? "text-gray-400" : "text-gray-500"
-                        }`}>
-                        {email}
-                      </p>
-                    </div>
-                  </div>
-                  <div className={`flex items-center justify-between p-3 rounded-lg ${theme === "dark" ? "bg-gray-700" : "bg-gray-100"
-                    }`}>
-                    <span className={`text-sm font-medium ${theme === "dark" ? "text-gray-300" : "text-gray-700"
-                      }`}>
-                      Balance
-                    </span>
-                    <span className="text-green-400 font-bold text-lg">
-                      ₹{user.balance.toFixed(2)}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Menu Items */}
-                <div className="p-2">
-                  <button
-                    onClick={() => {
-                      toggleTheme();
-                      setIsProfileOpen(false);
-                      setIsMenuOpen(false);
-                    }}
-                    className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg mb-1 transition-colors ${theme === "dark"
-                      ? "hover:bg-gray-700"
-                      : "hover:bg-gray-100"
-                      }`}
-                  >
-                    {theme === "dark" ? (
-                      <Sun size={20} className="text-yellow-400" />
-                    ) : (
-                      <Moon size={20} className="text-blue-600" />
-                    )}
-                    <span className={theme === "dark" ? "text-white" : "text-gray-900"}>
-                      {theme === "dark" ? "Light Mode" : "Dark Mode"}
-                    </span>
-                  </button>
-
-                  <button
-                    onClick={() => {
-                      navigate("/history");
-                      setIsProfileOpen(false);
-                      setIsMenuOpen(false);
-                    }}
-                    className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg mb-1 transition-colors ${theme === "dark"
-                      ? "hover:bg-gray-700"
-                      : "hover:bg-gray-100"
-                      }`}
-                  >
-                    <History size={20} className={theme === "dark" ? "text-blue-400" : "text-blue-600"} />
-                    <span className={theme === "dark" ? "text-white" : "text-gray-900"}>
-                      Transaction History
-                    </span>
-                  </button>
-
-                  <button
-                    onClick={() => {
-                      resetAccount();
-                      setIsProfileOpen(false);
-                      setIsMenuOpen(false);
-                    }}
-                    className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg mb-1 transition-colors ${theme === "dark"
-                      ? "hover:bg-gray-700"
-                      : "hover:bg-gray-100"
-                      }`}
-                  >
-                    <RotateCcw size={20} className="text-orange-500" />
-                    <span className={theme === "dark" ? "text-white" : "text-gray-900"}>
-                      Reset Account
-                    </span>
-                  </button>
-
-                  <button
-                    onClick={() => {
-                      logout();
-                      setIsProfileOpen(false);
-                      setIsMenuOpen(false);
-                    }}
-                    className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg transition-colors ${theme === "dark"
-                      ? "hover:bg-red-900/30 text-red-400"
-                      : "hover:bg-red-50 text-red-600"
-                      }`}
-                  >
-                    <LogOut size={20} />
-                    <span>Logout</span>
-                  </button>
-                </div>
-              </div>
-            )}
           </div>
         )}
       </div>
