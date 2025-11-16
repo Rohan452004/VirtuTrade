@@ -4,6 +4,8 @@ import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import toast from "react-hot-toast";
 import { Eye, EyeOff } from "lucide-react";
+import { useGoogleLogin } from "@react-oauth/google";
+import GoogleLogo from "../assets/GoogleLogo.png";
 
 function SignUpPage() {
   const [step, setStep] = useState(1); // Step 1 or Step 2
@@ -19,6 +21,53 @@ function SignUpPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const navigate = useNavigate();
+
+  async function getUserData(email) {
+    try {
+      const res = await axios.get(
+        `${import.meta.env.VITE_APP_WEB_URL}/api/users/${email}`
+      );
+
+      if (res.data.success) {
+        sessionStorage.setItem("user", JSON.stringify(res.data.user));
+      } else {
+        console.error("Error fetching data");
+      }
+    } catch (error) {
+      console.error("Error: ", error);
+    }
+  }
+
+  // 🔹 Google Sign-Up Handler
+  const googleSignUp = useGoogleLogin({
+    onSuccess: async (response) => {
+      try {
+        // 🔹 Send only access_token to backend
+        const res = await axios.post(
+          `${import.meta.env.VITE_APP_WEB_URL}/api/auth/google`,
+          {
+            token: response.access_token,
+          },
+          { withCredentials: true }
+        );
+
+        if (res.data.success) {
+          localStorage.setItem("token", res.data.token);
+          sessionStorage.setItem("userEmail", res.data.email);
+          await getUserData(res.data.email);
+          toast.success("Signed up with Google!");
+          setTimeout(() => {
+            navigate("/home", { state: { email: res.data.email } });
+          }, 1000);
+        } else {
+          toast.error("Google sign-up failed!");
+        }
+      } catch (error) {
+        toast.error("Google Authentication Error!");
+      }
+    },
+    onError: () => toast.error("Google Sign-In Failed!"),
+  });
 
   // Handle input changes for Step 1
   const handleInputChange = (e) => {
@@ -119,17 +168,17 @@ function SignUpPage() {
 
       {/* Sign Up Form */}
       <motion.div
-        className="w-full max-w-md bg-gray-900 bg-opacity-80 backdrop-blur-lg border border-gray-700 rounded-lg shadow-2xl p-8 z-10"
+        className="w-full max-w-md bg-gray-900 bg-opacity-80 backdrop-blur-lg border border-gray-700 rounded-lg shadow-2xl p-6 z-10"
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 1 }}
       >
-        <h2 className="text-3xl font-extrabold text-center bg-clip-text text-transparent bg-gradient-to-r from-green-400 to-purple-500 mb-6">
+        <h2 className="text-2xl font-extrabold text-center bg-clip-text text-transparent bg-gradient-to-r from-green-400 to-purple-500 mb-4">
           {step === 1 ? "Sign Up 🚀" : "Verify OTP 🔥"}
         </h2>
 
         {error && (
-          <div className="mb-4 p-3 bg-red-500 bg-opacity-20 text-red-300 rounded-lg text-sm">
+          <div className="mb-3 p-2.5 bg-red-500 bg-opacity-20 text-red-300 rounded-lg text-xs">
             {error}
           </div>
         )}
@@ -137,10 +186,10 @@ function SignUpPage() {
         {step === 1 ? (
           // Step 1: Collect user details
           <>
-            <div className="mb-6">
+            <div className="mb-4">
               <label
                 htmlFor="username"
-                className="block text-sm font-medium text-gray-400 mb-2"
+                className="block text-sm font-medium text-gray-400 mb-1.5"
               >
                 Username
               </label>
@@ -150,15 +199,15 @@ function SignUpPage() {
                 name="username"
                 value={formData.username}
                 onChange={handleInputChange}
-                className="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500"
+                className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 text-sm"
                 placeholder="Enter your username"
                 required
               />
             </div>
-            <div className="mb-6">
+            <div className="mb-4">
               <label
                 htmlFor="email"
-                className="block text-sm font-medium text-gray-400 mb-2"
+                className="block text-sm font-medium text-gray-400 mb-1.5"
               >
                 Email
               </label>
@@ -168,15 +217,15 @@ function SignUpPage() {
                 name="email"
                 value={formData.email}
                 onChange={handleInputChange}
-                className="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500"
+                className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 text-sm"
                 placeholder="Enter your email"
                 required
               />
             </div>
-            <div className="mb-6 relative">
+            <div className="mb-4 relative">
               <label
                 htmlFor="password"
-                className="block text-sm font-medium text-gray-400 mb-2"
+                className="block text-sm font-medium text-gray-400 mb-1.5"
               >
                 Password
               </label>
@@ -186,23 +235,23 @@ function SignUpPage() {
                 name="password"
                 value={formData.password}
                 onChange={handleInputChange}
-                className="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500"
+                className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 text-sm"
                 placeholder="Enter your password"
                 required
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-10 text-gray-400 hover:text-white transition-colors"
+                className="absolute right-3 top-8 text-gray-400 hover:text-white transition-colors"
               >
-                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
             </div>
 
-            <div className="mb-6 relative">
+            <div className="mb-4 relative">
               <label
                 htmlFor="confirmPassword"
-                className="block text-sm font-medium text-gray-400 mb-2"
+                className="block text-sm font-medium text-gray-400 mb-1.5"
               >
                 Confirm Password
               </label>
@@ -212,22 +261,23 @@ function SignUpPage() {
                 name="confirmPassword"
                 value={formData.confirmPassword}
                 onChange={handleInputChange}
-                className="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500"
+                className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 text-sm"
                 placeholder="Confirm your password"
                 required
               />
               <button
                 type="button"
                 onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                className="absolute right-3 top-10 text-gray-400 hover:text-white transition-colors"
+                className="absolute right-3 top-8 text-gray-400 hover:text-white transition-colors"
               >
-                {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
             </div>
+
             <motion.button
               type="button"
               onClick={handleSendOtp}
-              className="w-full px-6 py-3 bg-green-500 text-white text-lg font-semibold rounded-lg shadow-lg hover:bg-green-400 transition-all border border-green-400 flex items-center justify-center"
+              className="w-full px-4 py-2.5 bg-green-500 text-white text-base font-semibold rounded-lg shadow-lg hover:bg-green-400 transition-all border border-green-400 flex items-center justify-center"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               disabled={loading} // Disable button when loading
@@ -245,10 +295,10 @@ function SignUpPage() {
         ) : (
           // Step 2: Verify OTP
           <>
-            <div className="mb-6">
+            <div className="mb-4">
               <label
                 htmlFor="otp"
-                className="block text-sm font-medium text-gray-400 mb-2"
+                className="block text-sm font-medium text-gray-400 mb-1.5"
               >
                 Enter OTP
               </label>
@@ -257,7 +307,7 @@ function SignUpPage() {
                 id="otp"
                 value={otp}
                 onChange={handleOtpChange}
-                className="w-full px-4 py-3 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500"
+                className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500 text-sm"
                 placeholder="Enter OTP sent to your email"
                 required
               />
@@ -265,7 +315,7 @@ function SignUpPage() {
             <motion.button
               type="button"
               onClick={handleSignUp}
-              className="w-full px-6 py-3 bg-green-500 text-white text-lg font-semibold rounded-lg shadow-lg hover:bg-green-400 transition-all border border-green-400 flex items-center justify-center"
+              className="w-full px-4 py-2.5 bg-green-500 text-white text-base font-semibold rounded-lg shadow-lg hover:bg-green-400 transition-all border border-green-400 flex items-center justify-center"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               disabled={loading} // Disable button when loading
@@ -282,8 +332,19 @@ function SignUpPage() {
           </>
         )}
 
+        {/* 🔹 Google Sign-Up Button */}
+        <motion.button
+              className="w-full flex items-center justify-center gap-2 bg-white text-black p-2.5 rounded-md font-semibold shadow-md hover:bg-gray-200 transition-all border border-gray-300 mb-3 text-sm mt-3"
+              onClick={() => googleSignUp()}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <img src={GoogleLogo} alt="Google Logo" className="w-4 h-4" />
+              <span>Sign up with Google</span>
+        </motion.button>
+
         {/* Login Link */}
-        <p className="mt-6 text-center text-gray-400">
+        <p className="mt-4 text-center text-gray-400 text-sm">
           Already have an account?{" "}
           <button
             onClick={() => navigate("/login")}
