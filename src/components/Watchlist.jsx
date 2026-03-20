@@ -27,21 +27,31 @@ const Watchlist = ({ title, selectedStock, getWatchlist, watchlists }) => {
     if (!watchlists?.stocks?.length) return;
 
     try {
-      const responses = await Promise.all(
+      const responses = await Promise.allSettled(
         watchlists.stocks.map((symbol) =>
           axios.get(`${import.meta.env.VITE_APP_WEB_URL}/api/stock/${symbol}`)
         )
       );
 
       const newData = {};
-      responses.forEach((response, index) => {
+      responses.forEach((result, index) => {
+        if (result.status !== "fulfilled") return;
+        const response = result.value;
         const symbol = watchlists.stocks[index];
-        const meta = response.data.chart.result[0].meta;
+        const meta = response?.data?.chart?.result?.[0]?.meta;
+        if (!meta) return;
+
         const previousClose = meta.chartPreviousClose;
         const currentPrice = meta.regularMarketPrice;
 
-        const change = currentPrice - previousClose;
-        const changePercent = (change / previousClose) * 100;
+        const previousCloseNum =
+          typeof previousClose === "number" ? previousClose : 0;
+        const currentPriceNum =
+          typeof currentPrice === "number" ? currentPrice : 0;
+
+        const change = currentPriceNum - previousCloseNum;
+        const changePercent =
+          previousCloseNum !== 0 ? (change / previousCloseNum) * 100 : 0;
 
         newData[symbol] = {
           change: change.toFixed(2),

@@ -103,17 +103,14 @@ const Orders = ({ title, selectedStock, getPositions, positions }) => {
       const response = await axios.get(
         `${import.meta.env.VITE_APP_WEB_URL}/api/stock/${symbol}`
       );
-      const chartData = response.data.chart.result[0];
-      setSymbolData(chartData.meta);
+      const chartData = response?.data?.chart?.result?.[0];
 
-      if (
-        !chartData ||
-        !chartData.timestamp ||
-        !chartData.indicators.quote[0]
-      ) {
+      if (!chartData || !chartData.timestamp || !chartData.indicators?.quote?.[0]) {
         console.error("Invalid stock data received.");
         return;
       }
+
+      setSymbolData(chartData.meta);
     } catch (error) {
       console.error("Error fetching stock data:", error);
     }

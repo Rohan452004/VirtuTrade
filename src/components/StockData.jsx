@@ -294,7 +294,7 @@ const StockData = ({
       {/* Stock Price */}
       <div className="text-center mb-6">
         <span className="text-3xl font-bold text-green-500">
-          ₹{data.regularMarketPrice}
+          ₹{data.regularMarketPrice ?? 0}
         </span>
         <span
           className={`ml-2 text-lg ${priceChange > 0 ? "text-green-500" : "text-red-500"

@@ -142,22 +142,92 @@ const getUserData = async (req, res) => {
 
 const getStockData = async (req, res) => {
   try {
-    const symbol = req.params.symbol;
-    if (!symbol) {
+    const symbolParam = req.params.symbol;
+    if (!symbolParam) {
       return res.status(400).json({ error: "Stock symbol is required" });
     }
 
+    // Accept both "RELIANCE" and "RELIANCE.NS" from DB.
+    let baseSymbol = String(symbolParam).toUpperCase().trim();
+    while (baseSymbol.endsWith(".NS")) {
+      baseSymbol = baseSymbol.slice(0, -3);
+    }
+    const yahooSymbol = `${baseSymbol}.NS`;
+
+    const now = Math.floor(Date.now() / 1000);
+    const fallbackResponse = {
+      chart: {
+        result: [
+          {
+            meta: {
+              regularMarketPrice: null,
+              chartPreviousClose: null,
+              fullExchangeName: baseSymbol,
+              instrumentType: "EQUITY",
+              longName: baseSymbol,
+              symbol: baseSymbol,
+              regularMarketVolume: null,
+              regularMarketDayHigh: null,
+              regularMarketDayLow: null,
+              exchangeName: "",
+              currency: "INR",
+              fiftyTwoWeekHigh: null,
+              fiftyTwoWeekLow: null,
+            },
+            timestamp: [now],
+            indicators: {
+              quote: [
+                {
+                  open: [null],
+                  high: [null],
+                  low: [null],
+                  close: [null],
+                },
+              ],
+            },
+          },
+        ],
+        error: null,
+      },
+    };
+
     const response = await axios.get(
-      `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}.NS`
+      `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(
+        yahooSymbol
+      )}`,
+      {
+        timeout: 8000,
+        headers: {
+          // Yahoo sometimes behaves better when a UA header is present.
+          "User-Agent": "Mozilla/5.0",
+        },
+      }
     );
-    // const response = await axios.get(
-    //     `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}.NS?interval=1d&range=1mo`,
-    // );
+
+    const firstResult = response?.data?.chart?.result?.[0];
+    if (!firstResult?.meta) {
+      return res.status(200).json(fallbackResponse);
+    }
 
     res.json(response.data);
   } catch (error) {
     console.error("Error fetching stock data:", error.message);
-    res.status(500).json({ error: "Failed to fetch stock data" });
+    // Never fail the frontend polling with a 500; return a safe payload instead.
+    return res.status(200).json({
+      chart: {
+        result: [
+          {
+            meta: {
+              regularMarketPrice: null,
+              chartPreviousClose: null,
+            },
+            timestamp: [Math.floor(Date.now() / 1000)],
+            indicators: { quote: [{ open: [null], high: [null], low: [null], close: [null] }] },
+          },
+        ],
+        error: null,
+      },
+    });
   }
 };
 

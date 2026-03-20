@@ -154,7 +154,7 @@ const Positions = ({
       const response = await axios.get(
         `${import.meta.env.VITE_APP_WEB_URL}/api/stock/${symbol}`
       );
-      return response.data.chart.result[0].meta.regularMarketPrice;
+      return response?.data?.chart?.result?.[0]?.meta?.regularMarketPrice ?? null;
     } catch (error) {
       console.error("Error fetching stock price:", error);
       return null;
@@ -163,26 +163,29 @@ const Positions = ({
 
   // Fetch current prices for all positions
   const fetchAllPrices = async () => {
-    try {
-      const uniqueSymbols = [
-        ...new Set(
-          positions
-            .filter((pos) => pos.type === "buy" && pos.status === "executed")
-            .map((pos) => pos.stockSymbol)
-        ),
-      ];
+    const uniqueSymbols = [
+      ...new Set(
+        positions
+          .filter((pos) => pos.type === "buy" && pos.status === "executed")
+          .map((pos) => pos.stockSymbol)
+      ),
+    ];
 
-      const pricePromises = uniqueSymbols.map((symbol) =>
-        axios.get(`${import.meta.env.VITE_APP_WEB_URL}/api/stock/${symbol}`)
+    try {
+      const settledResponses = await Promise.allSettled(
+        uniqueSymbols.map((symbol) =>
+          axios.get(`${import.meta.env.VITE_APP_WEB_URL}/api/stock/${symbol}`)
+        )
       );
 
-      const responses = await Promise.all(pricePromises);
       const newPrices = {};
-
-      responses.forEach((response, index) => {
+      settledResponses.forEach((result, index) => {
         const symbol = uniqueSymbols[index];
-        newPrices[symbol] =
-          response.data.chart.result[0].meta.regularMarketPrice;
+        if (result.status !== "fulfilled") return;
+        const price =
+          result.value?.data?.chart?.result?.[0]?.meta
+            ?.regularMarketPrice ?? null;
+        newPrices[symbol] = price;
       });
 
       setCurrentPrices((prev) => ({ ...prev, ...newPrices }));
@@ -197,7 +200,7 @@ const Positions = ({
       .filter((pos) => pos.type === "buy" && pos.status === "executed")
       .reduce((total, position) => {
         const currentPrice = currentPrices[position.stockSymbol];
-        if (!currentPrice) return total;
+        if (currentPrice == null) return total;
         const pnl =
           (currentPrice - position.buyPrice) * position.remainingQuantity;
         return total + pnl;
@@ -207,7 +210,7 @@ const Positions = ({
   // Calculate position P&L
   const calculatePositionPnL = (position) => {
     const currentPrice = currentPrices[position.stockSymbol];
-    if (!currentPrice) return null;
+    if (currentPrice == null) return null;
     return (currentPrice - position.buyPrice) * position.remainingQuantity;
   };
 
