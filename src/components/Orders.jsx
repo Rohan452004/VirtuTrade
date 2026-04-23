@@ -88,9 +88,13 @@ const Orders = ({ title, selectedStock, getPositions, positions }) => {
   const updateBalance = async (balance) => {
     try {
       await axios.patch(
-        `${import.meta.env.VITE_APP_WEB_URL}/api/users/${user._id}`,
+        `${import.meta.env.VITE_APP_WEB_URL}/api/users/me/balance`,
         {
           balance,
+        }
+        ,
+        {
+          withCredentials: true,
         }
       );
     } catch (error) {

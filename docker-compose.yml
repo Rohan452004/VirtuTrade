@@ -1,0 +1,42 @@
+services:
+  mongo:
+    image: mongo:8
+    container_name: virtutrade-mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+
+  server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: virtutrade-server
+    environment:
+      PORT: "4000"
+      DATABASE_URL: "mongodb://mongo:27017/virtutrade"
+      JWT_SECRET: "change-me"
+      FRONTEND_URL: "http://localhost:5173"
+      COOKIE_SECURE: "false"
+    depends_on:
+      - mongo
+    ports:
+      - "4000:4000"
+
+  client:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        VITE_APP_WEB_URL: "http://localhost:4000"
+    container_name: virtutrade-client
+    environment:
+      VITE_APP_WEB_URL: "http://localhost:4000"
+    depends_on:
+      - server
+    ports:
+      - "5173:80"
+
+volumes:
+  mongo_data:
+

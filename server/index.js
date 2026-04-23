@@ -1,10 +1,12 @@
 const express = require('express');
+const helmet = require('helmet');
 const app = express();
 const db = require('./config/db');
 require("dotenv").config();
 const cors = require("cors");
 const http = require("http");
 const socketIo = require("socket.io");
+const moesif = require("moesif-nodejs");
 const axios = require("axios");
 const cookieparser = require("cookie-parser")
 
@@ -17,7 +19,29 @@ const watchlistRoutes = require("./routes/watchlistroutes");
 const positionRoutes = require("./routes/positionroutes");
 
 const PORT = process.env.PORT || 4000;
-const frontendurl = process.env.FRONTEND_URL;
+
+app.disable("x-powered-by");
+app.set("trust proxy", 1);
+
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      useDefaults: false,
+      directives: {
+        defaultSrc: ["'self'"],
+        baseUri: ["'self'"],
+        objectSrc: ["'none'"],
+        frameAncestors: ["'none'"],
+        formAction: ["'self'"],
+        scriptSrc: ["'self'"],
+        scriptSrcAttr: ["'none'"],
+        styleSrc: ["'self'"],
+        imgSrc: ["'self'", "data:"],
+        fontSrc: ["'self'", "data:"],
+      },
+    },
+  })
+);
 app.use(cookieparser());
 db.connectDB();
 app.use(
@@ -29,21 +53,52 @@ app.use(
   })
 );
 
+app.use((req, res, next) => {
+  const forceHttps =
+    String(process.env.FORCE_HTTPS || "").toLowerCase() === "true" ||
+    String(process.env.NODE_ENV || "").toLowerCase() === "production";
+  if (forceHttps && !req.secure) {
+    return res.status(426).json({
+      success: false,
+      message: "HTTPS is required",
+    });
+  }
+  return next();
+});
 
 app.use(express.json());
+
+const moesifApplicationId = process.env.MOESIF_APPLICATION_ID;
+if (moesifApplicationId) {
+  const moesifMiddleware = moesif({
+    applicationId: moesifApplicationId,
+    identifyUser: (req) => req.user?.userId || req.user?.id || req.ip,
+    getSessionToken: (req) => {
+      const authHeader = req.headers.authorization;
+      if (authHeader && authHeader.startsWith("Bearer ")) {
+        return authHeader.slice(7);
+      }
+      return req.cookies?.token;
+    },
+    logBody: String(process.env.MOESIF_LOG_BODY || "").toLowerCase() === "true",
+  });
+  app.use(moesifMiddleware);
+}
+
 app.use("/api", userRoutes);
 app.use("/api/watchlist", watchlistRoutes);
 app.use("/api/position", positionRoutes);
 
-app.get('/', (req, res) => {
-    res.send("<h1>VirtuTrade. Your server is Live</h1>");
+app.get("/", (req, res) => {
+  res.send("<h1>VirtuTrade. Your server is Live</h1>");
 });
 
-// ✅ Test route to check cookies
-app.get("/test-cookies", (req, res) => {
-  console.log("Cookies received:", req.cookies);
-  res.json({ cookies: req.cookies });
-});
+if (process.env.NODE_ENV !== "production") {
+  // Test route available only in non-production environments.
+  app.get("/test-cookies", (req, res) => {
+    res.json({ hasTokenCookie: Boolean(req.cookies?.token) });
+  });
+}
 
 const server = http.createServer(app);
 const io = socketIo(server, {
@@ -153,4 +208,13 @@ io.on('connection', (socket) => {
 
 server.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
+});
+
+app.use((req, res) => {
+  res.status(404).json({ success: false, message: "Resource not found" });
+});
+
+app.use((err, req, res, next) => {
+  console.error("Unhandled server error:", err.message);
+  res.status(500).json({ success: false, message: "Internal server error" });
 });

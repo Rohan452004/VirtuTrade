@@ -4,30 +4,33 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "nodemon index.js"
+    "start": "npm exec -- nodemon index.js",
+    "postinstall": "patch-package"
   },
   "author": "",
   "license": "ISC",
   "description": "",
+  "devDependencies": {
+    "nodemon": "^3.1.14",
+    "patch-package": "^8.0.0"
+  },
   "dependencies": {
-    "axios": "^1.8.3",
-    "bcrypt": "^5.1.1",
+    "axios": "^1.15.2",
     "bcryptjs": "^3.0.2",
-    "chart.js": "^4.4.8",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
-    "crypto": "^1.0.1",
     "date-fns": "^4.1.0",
     "dotenv": "^16.4.7",
-    "express": "^4.21.2",
-    "google-auth-library": "^9.15.1",
-    "http": "^0.0.1-security",
-    "jsonwebtoken": "^9.0.2",
+    "express": "^5.1.0",
+    "helmet": "^8.1.0",
+    "jsonwebtoken": "^9.0.3",
+    "moesif-nodejs": "^3.11.0",
     "mongoose": "^8.12.1",
-    "nodemailer": "^6.10.0",
-    "nodemon": "^3.1.9",
+    "nodemailer": "^8.0.5",
     "otp-generator": "^4.0.1",
-    "react-chartjs-2": "^5.3.0",
-    "socket.io": "^4.8.1"
+    "socket.io": "^4.8.3"
+  },
+  "overrides": {
+    "socket.io-parser": "4.2.6"
   }
 }
