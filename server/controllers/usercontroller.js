@@ -3,12 +3,39 @@ const { Position } = require("../models/Position");
 const Watchlist = require("../models/Watchlist");
 const History = require("../models/History");
 const OTP = require("../models/OTP");
-const bcrypt = require("bcrypt");
+const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const axios = require("axios");
 const otpGenerator = require("otp-generator");
-const OAuth2Client = require ("google-auth-library");
 require("dotenv").config();
+
+function sanitizeUser(userDoc) {
+  if (!userDoc) return null;
+  return {
+    _id: userDoc._id,
+    username: userDoc.username,
+    email: userDoc.email,
+    balance: userDoc.balance,
+    googleAuth: Boolean(userDoc.googleAuth),
+  };
+}
+
+function getCookieOptions() {
+  const secure =
+    String(process.env.COOKIE_SECURE || "").toLowerCase() === "true" ||
+    String(process.env.NODE_ENV || "").toLowerCase() === "production";
+
+  // Browsers require SameSite=None cookies to be Secure.
+  const sameSite = secure ? "None" : "Lax";
+
+  return {
+    httpOnly: true,
+    secure,
+    sameSite,
+    path: "/",
+    expires: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000), // 3 days expiry
+  };
+}
 
 const createUser = async (req, res) => {
     try {
@@ -69,7 +96,7 @@ const createUser = async (req, res) => {
       res.status(201).json({
         success: true,
         message: "User created successfully",
-        user: newUser,
+        user: sanitizeUser(newUser),
       });
     } catch (error) {
       console.error("Error creating user:", error);
@@ -106,19 +133,12 @@ const loginUser = async (req, res) => {
     user.token = token;
     await user.save(); // Ensure the user token is saved properly
 
-    // ✅ Corrected Cookie Options
-    res.cookie("token", token, {
-      httpOnly: true, // Prevents client-side access
-      secure: true, // Required for HTTPS (Remove for local testing)
-      sameSite: "None", // Required for cross-origin requests
-      path: "/",
-      expires: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000), // 3 days expiry
-    });
+    res.cookie("token", token, getCookieOptions());
 
     res.status(200).json({
       success: true,
       token,
-      user,
+      user: sanitizeUser(user),
       message: "User Login Success",
     });
   } catch (error) {
@@ -128,16 +148,16 @@ const loginUser = async (req, res) => {
 };
 
 const getUserData = async (req, res) => {
-  const email = req.params.email;
-  console.log(email);
   try {
-    const user = await User.findOne({ email });
+    const user = await User.findById(req.user.userId);
     if (!user) {
-      return res.json({ success: false });
+      return res.status(404).json({ success: false, message: "User not found" });
     }
 
-    return res.json({ success: true, user });
-  } catch (error) {}
+    return res.json({ success: true, user: sanitizeUser(user) });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: "Failed to fetch user data" });
+  }
 };
 
 const getStockData = async (req, res) => {
@@ -209,7 +229,49 @@ const getStockData = async (req, res) => {
       return res.status(200).json(fallbackResponse);
     }
 
-    res.json(response.data);
+    const quote = firstResult.indicators?.quote?.[0] || {};
+    const timestamps = Array.isArray(firstResult.timestamp)
+      ? firstResult.timestamp.slice(-120)
+      : [now];
+
+    const trimSeries = (arr) =>
+      Array.isArray(arr) ? arr.slice(-120) : [null];
+
+    return res.json({
+      chart: {
+        result: [
+          {
+            meta: {
+              regularMarketPrice: firstResult.meta.regularMarketPrice ?? null,
+              chartPreviousClose: firstResult.meta.chartPreviousClose ?? null,
+              fullExchangeName: firstResult.meta.fullExchangeName ?? baseSymbol,
+              instrumentType: firstResult.meta.instrumentType ?? "EQUITY",
+              longName: firstResult.meta.longName ?? baseSymbol,
+              symbol: firstResult.meta.symbol ?? baseSymbol,
+              regularMarketVolume: firstResult.meta.regularMarketVolume ?? null,
+              regularMarketDayHigh: firstResult.meta.regularMarketDayHigh ?? null,
+              regularMarketDayLow: firstResult.meta.regularMarketDayLow ?? null,
+              exchangeName: firstResult.meta.exchangeName ?? "",
+              currency: firstResult.meta.currency ?? "INR",
+              fiftyTwoWeekHigh: firstResult.meta.fiftyTwoWeekHigh ?? null,
+              fiftyTwoWeekLow: firstResult.meta.fiftyTwoWeekLow ?? null,
+            },
+            timestamp: timestamps,
+            indicators: {
+              quote: [
+                {
+                  open: trimSeries(quote.open),
+                  high: trimSeries(quote.high),
+                  low: trimSeries(quote.low),
+                  close: trimSeries(quote.close),
+                },
+              ],
+            },
+          },
+        ],
+        error: null,
+      },
+    });
   } catch (error) {
     console.error("Error fetching stock data:", error.message);
     // Never fail the frontend polling with a 500; return a safe payload instead.
@@ -233,13 +295,27 @@ const getStockData = async (req, res) => {
 
 const updateBalance = async (req, res) => {
   const { balance } = req.body;
-  const id = req.params.id;
+  const id = req.user.userId;
 
   try {
-    const updated = await User.findByIdAndUpdate(id, { $set: { balance } });
+    if (!Number.isFinite(balance)) {
+      return res.status(400).json({ success: false, message: "Invalid balance value" });
+    }
 
-    return res.status(200).json({ message: "Balance updated" });
-  } catch (error) {}
+    const updated = await User.findByIdAndUpdate(
+      id,
+      { $set: { balance: Number(balance) } },
+      { new: true }
+    );
+
+    if (!updated) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    return res.status(200).json({ success: true, message: "Balance updated", balance: updated.balance });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: "Failed to update balance" });
+  }
 };
 
 // Send OTP For Email Verification
@@ -351,19 +427,12 @@ const googlelogin = async (req, res) => {
 
     console.log("Generated Token", appToken);
 
-    // ✅ Corrected Cookie Options
-    res.cookie("token", appToken, {
-      httpOnly: true, // Prevents client-side access
-      secure: true, // Required for HTTPS (Remove for local testing)
-      sameSite: "None", // Required for cross-origin requests
-      path: "/",
-      expires: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000), // 3 days expiry
-    });
+    res.cookie("token", appToken, getCookieOptions());
 
     res.status(200).json({
       success: true,
       token: appToken,
-      user,
+      user: sanitizeUser(user),
       email: user.email,
       message: "User Login Success",
     });

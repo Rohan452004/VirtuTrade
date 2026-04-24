@@ -63,9 +63,13 @@ const StockData = ({
   const updateBalance = async () => {
     try {
       await axios.patch(
-        `${import.meta.env.VITE_APP_WEB_URL}/api/users/${user._id}`,
+        `${import.meta.env.VITE_APP_WEB_URL}/api/users/me/balance`,
         {
           balance: Number(user.balance - requiredAmount),
+        }
+        ,
+        {
+          withCredentials: true,
         }
       );
     } catch (error) {

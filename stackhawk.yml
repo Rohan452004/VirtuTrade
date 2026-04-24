@@ -1,0 +1,9 @@
+app:
+  applicationId: ab589aa1-e363-4f05-8689-19448fc0c3b6
+  env: Development
+  host: http://localhost:3000
+hawk:
+  spider:
+    maxDurationMinutes: 2
+  scan:
+    maxDurationMinutes: 5

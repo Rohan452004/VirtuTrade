@@ -13,10 +13,11 @@ function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
 
-  async function getUserData(email) {
+  async function getUserData() {
     try {
       const res = await axios.get(
-        `${import.meta.env.VITE_APP_WEB_URL}/api/users/${email}`
+        `${import.meta.env.VITE_APP_WEB_URL}/api/users/me`,
+        { withCredentials: true }
       );
 
       if (res.data.success) {
@@ -42,7 +43,7 @@ function LoginPage() {
       if (res.data.success) {
         localStorage.setItem("token", res.data.token);
         sessionStorage.setItem("userEmail", email);
-        await getUserData(email);
+        await getUserData();
         toast.success("Login successful");
         setTimeout(() => {
           navigate("/home", { state: { email: email } });
@@ -72,7 +73,7 @@ function LoginPage() {
         if (res.data.success) {
           localStorage.setItem("token", res.data.token);
           sessionStorage.setItem("userEmail", res.data.email);
-          await getUserData(res.data.email);
+          await getUserData();
           toast.success("Logged in with Google!");
           setTimeout(() => {
             navigate("/home", { state: { email: res.data.email } });

@@ -151,3 +151,20 @@ dist
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+# ZAP
+zap-report.html
+zap-report.json
+zap-report.md
+zap-rules.conf
+
+# Stackhawk
+stackhawk.yml
+
+# Trivy
+trivy-report.json
+trivy-report.txt
+trivy-report.html
+
+# Example ENV
+.env.example

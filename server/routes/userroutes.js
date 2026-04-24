@@ -25,8 +25,8 @@ router.post("/auth/google", googlelogin);
 router.post("/users/sendotp", sendotp);
 router.post("/users/signup", createUser);
 router.post("/users/login", loginUser);
-router.get("/users/:email", getUserData);
-router.patch("/users/:id", updateBalance);
+router.get("/users/me", auth, getUserData);
+router.patch("/users/me/balance", auth, updateBalance);
 router.get("/stock/:symbol", getStockData);
 router.post("/account/reset", auth, resetAccount);
 
