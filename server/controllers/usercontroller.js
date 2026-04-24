@@ -442,6 +442,118 @@ const googlelogin = async (req, res) => {
   }
 };
 
+const askTradingAssistant = async (req, res) => {
+  try {
+    const question = String(req.body?.question || "").trim();
+    if (!question) {
+      return res.status(400).json({
+        success: false,
+        message: "Question is required.",
+      });
+    }
+
+    if (question.length > 500) {
+      return res.status(400).json({
+        success: false,
+        message: "Question is too long. Please keep it under 500 characters.",
+      });
+    }
+
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+      return res.status(503).json({
+        success: false,
+        message: "AI assistant is not configured on the server.",
+      });
+    }
+
+    const modelCandidates = [
+      process.env.GEMINI_MODEL,
+      "gemini-2.5-flash",
+      "gemini-flash-latest",
+      "gemini-2.0-flash",
+      "gemini-pro-latest",
+    ].filter(Boolean);
+    const prompt = [
+      "You are a concise trading education assistant for the VirtuTrade app.",
+      "Only answer general educational questions about markets, order types, risk management, and platform usage.",
+      "Never provide guaranteed returns or personalized financial advice.",
+      "If asked for investment recommendations, respond with a cautionary educational alternative.",
+      `User question: ${question}`,
+    ].join("\n");
+
+    let answer = "";
+    let lastError = null;
+
+    for (const model of modelCandidates) {
+      try {
+        const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+        const response = await axios.post(
+          endpoint,
+          {
+            contents: [
+              {
+                role: "user",
+                parts: [{ text: prompt }],
+              },
+            ],
+            generationConfig: {
+              temperature: 0.4,
+              maxOutputTokens: 300,
+            },
+          },
+          {
+            timeout: 12000,
+            headers: { "Content-Type": "application/json" },
+          }
+        );
+
+        answer =
+          response.data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() ||
+          "";
+        if (answer) break;
+      } catch (error) {
+        lastError = error;
+        const statusCode = error?.response?.status;
+        // Try next model only for "model not found/unsupported" style errors.
+        if (statusCode !== 404) {
+          break;
+        }
+      }
+    }
+
+    if (!answer) {
+      const statusCode = lastError?.response?.status;
+      const apiMessage =
+        lastError?.response?.data?.error?.message || lastError?.message;
+      console.error("Gemini assistant error:", statusCode || "", apiMessage);
+      return res.status(502).json({
+        success: false,
+        message:
+          statusCode === 404
+            ? "Gemini model endpoint not found for this API key. Set GEMINI_MODEL in server/.env (example: gemini-1.5-flash)."
+            : "Failed to get AI response from Gemini.",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      answer,
+      disclaimer: "Educational content only, not financial advice.",
+    });
+  } catch (error) {
+    console.error(
+      "Gemini assistant error:",
+      error?.response?.status || "",
+      error?.response?.data?.error?.message || error.message
+    );
+    return res.status(500).json({
+      success: false,
+      message: "Failed to get AI response.",
+    });
+  }
+};
+
 
 module.exports = {
   createUser,
@@ -452,4 +564,5 @@ module.exports = {
   sendotp,
   resetAccount,
   googlelogin,
+  askTradingAssistant,
 };

@@ -10,6 +10,7 @@ import ErrorPage from './pages/ErrorPage';
 import HistoryPage from './pages/HistoryPage';
 import { GoogleOAuthProvider } from "@react-oauth/google";
 import { ThemeProvider } from "./contexts/ThemeContext";
+import AiChatbot from "./components/AiChatbot";
 // import './App.css'
 
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID; // Use environment variable
@@ -30,6 +31,7 @@ function App() {
 
             <Route path="*" element={<ErrorPage />} />
           </Routes>
+          <AiChatbot />
         </GoogleOAuthProvider>
       </ThemeProvider>
     </>

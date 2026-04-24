@@ -8,6 +8,7 @@ const {
   sendotp,
   resetAccount,
   googlelogin,
+  askTradingAssistant,
 } = require("../controllers/usercontroller");
 
 const {
@@ -28,6 +29,7 @@ router.post("/users/login", loginUser);
 router.get("/users/me", auth, getUserData);
 router.patch("/users/me/balance", auth, updateBalance);
 router.get("/stock/:symbol", getStockData);
+router.post("/assistant/chat", askTradingAssistant);
 router.post("/account/reset", auth, resetAccount);
 
 router.post("/users/reset-password-token", resetPasswordToken);
