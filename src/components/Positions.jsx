@@ -219,7 +219,7 @@ const Positions = ({
     if (positions.length === 0) return;
 
     fetchAllPrices();
-    const interval = setInterval(fetchAllPrices, 30000);
+    const interval = setInterval(fetchAllPrices, 15000);
     return () => clearInterval(interval);
   }, [positions]);
 
